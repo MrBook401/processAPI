@@ -45,3 +45,23 @@ export interface ValidationResponse {
   phase: 'TEST' | 'PREPROD' | 'PROD' | null;
   message: string;
 }
+
+export const EnvironmentSchema = z.enum(['dev', 'test', 'preprod', 'prod']);
+export const JurisdictionSchema = z.enum(['APAC', 'CH', 'EMEA', 'US']);
+
+export const ApplicationSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  environments: z.record(EnvironmentSchema, z.array(JurisdictionSchema)),
+  created_at: z.string().datetime(),
+});
+
+export const CreateApplicationSchema = z.object({
+  name: z.string().min(1),
+  environments: z.record(EnvironmentSchema, z.array(JurisdictionSchema)),
+});
+
+export type Environment = z.infer<typeof EnvironmentSchema>;
+export type Jurisdiction = z.infer<typeof JurisdictionSchema>;
+export type Application = z.infer<typeof ApplicationSchema>;
+export type CreateApplication = z.infer<typeof CreateApplicationSchema>;

@@ -4,11 +4,13 @@ exports.routes = void 0;
 const express_1 = require("express");
 const EventRepository_1 = require("../services/EventRepository");
 const ReleaseRepository_1 = require("../services/ReleaseRepository");
+const ApplicationRepository_1 = require("../services/ApplicationRepository");
 const WindowCalculationEngine_1 = require("../services/WindowCalculationEngine");
 const types_1 = require("../types");
 exports.routes = (0, express_1.Router)();
 const eventRepo = new EventRepository_1.EventRepository();
 const releaseRepo = new ReleaseRepository_1.ReleaseRepository();
+const applicationRepo = new ApplicationRepository_1.ApplicationRepository();
 const windowEngine = new WindowCalculationEngine_1.WindowCalculationEngine();
 exports.routes.post('/events', async (req, res) => {
     const parseResult = types_1.CreateEventSchema.safeParse(req.body);
@@ -104,6 +106,28 @@ exports.routes.get('/release/validate/id', async (req, res) => {
         }
         const validation = windowEngine.validateTiming(event, timestamp);
         res.status(200).json(validation);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+exports.routes.post('/applications', async (req, res) => {
+    const parseResult = types_1.CreateApplicationSchema.safeParse(req.body);
+    if (!parseResult.success) {
+        return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
+    }
+    try {
+        const application = await applicationRepo.createApplication(parseResult.data);
+        res.status(201).json(application);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+exports.routes.get('/applications', async (req, res) => {
+    try {
+        const applications = await applicationRepo.getAllApplications();
+        res.status(200).json(applications);
     }
     catch (err) {
         res.status(500).json({ error: err.message });

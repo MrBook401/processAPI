@@ -45,6 +45,13 @@ async function initializeSchema(db: Database) {
     );
     
     CREATE INDEX IF NOT EXISTS idx_release_id ON release_attachment(release_id);
+
+    CREATE TABLE IF NOT EXISTS application (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      environments TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
   `);
 }
 

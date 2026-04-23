@@ -80,3 +80,27 @@ Optionally, pass a `releaseTimestamp` parameter; otherwise, the current server t
 ```bash
 curl -X GET "http://localhost:3001/release/validate/id?releaseId=REL-12345&eventId=[EVENT_ID]&releaseTimestamp=2026-05-10T12:00:00Z"
 ```
+
+### 6. Create an Application
+Creates a new application mapping its supported environments (`dev`, `test`, `preprod`, `prod`) to regional jurisdictions (`APAC`, `CH`, `EMEA`, `US`).
+
+```bash
+curl -X POST http://localhost:3001/applications \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Core Banking API",
+    "environments": {
+      "dev": ["CH"],
+      "test": ["CH", "EMEA"],
+      "preprod": ["CH", "EMEA", "US"],
+      "prod": ["APAC", "CH", "EMEA", "US"]
+    }
+  }'
+```
+
+### 7. List All Applications
+Retrieves a list of all defined applications and their environment configurations.
+
+```bash
+curl -X GET http://localhost:3001/applications
+```

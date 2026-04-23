@@ -44,3 +44,34 @@ export async function validateRelease(releaseId: string, eventId: string) {
   if (!res.ok) throw new Error('Failed to validate release');
   return res.json();
 }
+
+export type Environment = 'dev' | 'test' | 'preprod' | 'prod';
+export type Jurisdiction = 'APAC' | 'CH' | 'EMEA' | 'US';
+
+export interface Application {
+  id: string;
+  name: string;
+  environments: Record<Environment, Jurisdiction[]>;
+  created_at: string;
+}
+
+export interface CreateApplicationData {
+  name: string;
+  environments: Record<Environment, Jurisdiction[]>;
+}
+
+export async function fetchApplications(): Promise<Application[]> {
+  const res = await fetch(`${API_BASE}/applications`);
+  if (!res.ok) throw new Error('Failed to fetch applications');
+  return res.json();
+}
+
+export async function createApplication(data: CreateApplicationData): Promise<Application> {
+  const res = await fetch(`${API_BASE}/applications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create application');
+  return res.json();
+}

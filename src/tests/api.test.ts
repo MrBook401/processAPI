@@ -67,4 +67,30 @@ describe('API Tests', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body.isValid).toEqual(false);
   });
+
+  it('POST /applications should create an application', async () => {
+    const res = await request(app)
+      .post('/applications')
+      .send({
+        name: 'Core Banking API',
+        environments: {
+          dev: ['CH'],
+          test: ['CH', 'EMEA'],
+          preprod: ['CH', 'EMEA', 'US'],
+          prod: ['APAC', 'CH', 'EMEA', 'US']
+        }
+      });
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.name).toEqual('Core Banking API');
+    expect(res.body.environments.dev).toEqual(['CH']);
+  });
+
+  it('GET /applications should list applications', async () => {
+    const res = await request(app).get('/applications');
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body[0]).toHaveProperty('id');
+    expect(res.body[0]).toHaveProperty('environments');
+  });
 });

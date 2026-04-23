@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { EventRepository } from '../services/EventRepository';
 import { ReleaseRepository } from '../services/ReleaseRepository';
+import { ApplicationRepository } from '../services/ApplicationRepository';
 import { WindowCalculationEngine } from '../services/WindowCalculationEngine';
-import { CreateEventSchema, UpdateEventSchema, AttachReleaseSchema } from '../types';
+import { CreateEventSchema, UpdateEventSchema, AttachReleaseSchema, CreateApplicationSchema } from '../types';
 
 export const routes = Router();
 const eventRepo = new EventRepository();
 const releaseRepo = new ReleaseRepository();
+const applicationRepo = new ApplicationRepository();
 const windowEngine = new WindowCalculationEngine();
 
 routes.post('/events', async (req, res) => {
@@ -114,6 +116,29 @@ routes.get('/release/validate/id', async (req, res) => {
 
     const validation = windowEngine.validateTiming(event, timestamp);
     res.status(200).json(validation);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+routes.post('/applications', async (req, res) => {
+  const parseResult = CreateApplicationSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
+  }
+
+  try {
+    const application = await applicationRepo.createApplication(parseResult.data);
+    res.status(201).json(application);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+routes.get('/applications', async (req, res) => {
+  try {
+    const applications = await applicationRepo.getAllApplications();
+    res.status(200).json(applications);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

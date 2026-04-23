@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { fetchEvents, createEvent, attachRelease, validateRelease, ProcessEvent } from '../lib/api/client';
+import { fetchEvents, createEvent, attachRelease, validateRelease, ProcessEvent, fetchApplications, createApplication, Application, Environment, Jurisdiction } from '../lib/api/client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 export default function ProcessManagerDashboard() {
   const queryClient = useQueryClient();
   const { data: events, isLoading } = useQuery({ queryKey: ['events'], queryFn: fetchEvents });
+  const { data: applications, isLoading: isAppsLoading } = useQuery({ queryKey: ['applications'], queryFn: fetchApplications });
 
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -59,6 +60,48 @@ export default function ProcessManagerDashboard() {
       alert('Validation check failed');
     }
   };
+
+  // Application State
+  const [isAppModalOpen, setIsAppModalOpen] = useState(false);
+  const [newApp, setNewApp] = useState({
+    name: '',
+    environments: {
+      dev: [] as Jurisdiction[],
+      test: [] as Jurisdiction[],
+      preprod: [] as Jurisdiction[],
+      prod: [] as Jurisdiction[]
+    }
+  });
+
+  const createAppMutation = useMutation({
+    mutationFn: async () => {
+      await createApplication({
+        name: newApp.name,
+        environments: newApp.environments
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      setIsAppModalOpen(false);
+      setNewApp({
+        name: '',
+        environments: { dev: [], test: [], preprod: [], prod: [] }
+      });
+    }
+  });
+
+  const toggleJurisdiction = (env: Environment, jur: Jurisdiction) => {
+    setNewApp(prev => {
+      const current = prev.environments[env];
+      const updated = current.includes(jur) 
+        ? current.filter(j => j !== jur)
+        : [...current, jur];
+      return { ...prev, environments: { ...prev.environments, [env]: updated } };
+    });
+  };
+
+  const environmentsList: Environment[] = ['dev', 'test', 'preprod', 'prod'];
+  const jurisdictionsList: Jurisdiction[] = ['APAC', 'CH', 'EMEA', 'US'];
 
   return (
     <div className="container mx-auto p-8 max-w-6xl space-y-8">
@@ -144,6 +187,91 @@ export default function ProcessManagerDashboard() {
               ))}
               {!events?.length && !isLoading && (
                 <TableRow><TableCell colSpan={5} className="text-center">No events found.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Applications</CardTitle>
+          <Dialog open={isAppModalOpen} onOpenChange={setIsAppModalOpen}>
+            <DialogTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+              Create Application
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Create New Application</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <label className="text-sm font-medium">Application Name</label>
+                  <Input value={newApp.name} onChange={(e) => setNewApp({ ...newApp, name: e.target.value })} placeholder="e.g. Core Banking API" />
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">Environments & Jurisdictions</h4>
+                  {environmentsList.map(env => (
+                    <div key={env} className="grid grid-cols-[100px_1fr] items-center gap-4 border-b pb-2">
+                      <span className="text-sm font-semibold uppercase">{env}</span>
+                      <div className="flex flex-wrap gap-2">
+                        {jurisdictionsList.map(jur => {
+                          const isSelected = newApp.environments[env].includes(jur);
+                          return (
+                            <Badge 
+                              key={jur} 
+                              variant={isSelected ? "default" : "outline"}
+                              className="cursor-pointer"
+                              onClick={() => toggleJurisdiction(env, jur)}
+                            >
+                              {jur}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Button onClick={() => createAppMutation.mutate()} className="w-full">Save Application</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>App Name</TableHead>
+                <TableHead>DEV</TableHead>
+                <TableHead>TEST</TableHead>
+                <TableHead>PREPROD</TableHead>
+                <TableHead>PROD</TableHead>
+                <TableHead>ID</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications?.map((app: Application) => (
+                <TableRow key={app.id}>
+                  <TableCell className="font-medium">{app.name}</TableCell>
+                  <TableCell className="text-xs">
+                    {app.environments.dev.join(', ') || '-'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {app.environments.test.join(', ') || '-'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {app.environments.preprod.join(', ') || '-'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {app.environments.prod.join(', ') || '-'}
+                  </TableCell>
+                  <TableCell className="text-xs text-gray-400">{app.id}</TableCell>
+                </TableRow>
+              ))}
+              {!applications?.length && !isAppsLoading && (
+                <TableRow><TableCell colSpan={6} className="text-center">No applications found.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
