@@ -11,6 +11,29 @@ const releaseRepo = new ReleaseRepository();
 const applicationRepo = new ApplicationRepository();
 const windowEngine = new WindowCalculationEngine();
 
+/**
+ * @openapi
+ * /events:
+ *   post:
+ *     summary: Create a new event
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateEvent'
+ *     responses:
+ *       201:
+ *         description: Created event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Invalid payload
+ *       500:
+ *         description: Server error
+ */
 routes.post('/events', async (req, res) => {
   const parseResult = CreateEventSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -25,6 +48,23 @@ routes.post('/events', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /events:
+ *   get:
+ *     summary: Retrieve all events
+ *     responses:
+ *       200:
+ *         description: A list of events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Event'
+ *       500:
+ *         description: Server error
+ */
 routes.get('/events', async (req, res) => {
   try {
     const events = await eventRepo.findAll();
@@ -34,6 +74,39 @@ routes.get('/events', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /events/{id}:
+ *   patch:
+ *     summary: Update an existing event
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The event ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateEvent'
+ *     responses:
+ *       200:
+ *         description: Updated event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Invalid payload
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
 routes.patch('/events/:id', async (req, res) => {
   const parseResult = UpdateEventSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -49,6 +122,31 @@ routes.patch('/events/:id', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /release/attach:
+ *   post:
+ *     summary: Attach a release to an event
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AttachRelease'
+ *     responses:
+ *       201:
+ *         description: Successfully attached release
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ReleaseAttachment'
+ *       400:
+ *         description: Invalid payload
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
 routes.post('/release/attach', async (req, res) => {
   const parseResult = AttachReleaseSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -69,6 +167,31 @@ routes.post('/release/attach', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /release/attach:
+ *   patch:
+ *     summary: Update a release attachment
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AttachRelease'
+ *     responses:
+ *       200:
+ *         description: Successfully updated attachment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ReleaseAttachment'
+ *       400:
+ *         description: Invalid payload
+ *       404:
+ *         description: Event or release not found
+ *       500:
+ *         description: Server error
+ */
 routes.patch('/release/attach', async (req, res) => {
   const parseResult = AttachReleaseSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -93,6 +216,42 @@ routes.patch('/release/attach', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /release/validate/id:
+ *   get:
+ *     summary: Validate if a release can be deployed at a given time
+ *     parameters:
+ *       - in: query
+ *         name: releaseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: releaseTimestamp
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *     responses:
+ *       200:
+ *         description: Validation result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationResponse'
+ *       400:
+ *         description: Missing parameters or not attached
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
 routes.get('/release/validate/id', async (req, res) => {
   const { releaseId, eventId, releaseTimestamp } = req.query;
 
@@ -121,6 +280,29 @@ routes.get('/release/validate/id', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /applications:
+ *   post:
+ *     summary: Create a new application
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateApplication'
+ *     responses:
+ *       201:
+ *         description: Created application
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Application'
+ *       400:
+ *         description: Invalid payload
+ *       500:
+ *         description: Server error
+ */
 routes.post('/applications', async (req, res) => {
   const parseResult = CreateApplicationSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -135,6 +317,23 @@ routes.post('/applications', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /applications:
+ *   get:
+ *     summary: Retrieve all applications
+ *     responses:
+ *       200:
+ *         description: A list of applications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Application'
+ *       500:
+ *         description: Server error
+ */
 routes.get('/applications', async (req, res) => {
   try {
     const applications = await applicationRepo.getAllApplications();

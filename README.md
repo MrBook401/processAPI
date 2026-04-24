@@ -23,6 +23,13 @@ A process management system API that allows defining deployment windows for futu
    ```
    The frontend will run on `http://localhost:3000`.
 
+## API Documentation (Swagger)
+
+The project includes an interactive Swagger API documentation UI. Once the server is running, you can access it by navigating to:
+**http://localhost:3001/api-docs**
+
+This interface allows you to view all available endpoints, their expected request/response formats, and even test them directly from your browser.
+
 ## API Endpoints & Curl Examples
 
 Below are `curl` commands to interact directly with the API. The base URL is `http://localhost:3001`.

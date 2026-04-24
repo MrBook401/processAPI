@@ -32,15 +32,21 @@ erDiagram
         TEXT name
         TEXT test_start
         TEXT test_end
+        BOOL test_enabled 
         TEXT preprod_start
         TEXT preprod_end
+        BOOL preprod_enabled 
         TEXT prod_start
         TEXT prod_end
+        BOOL prod_enabled
         TEXT created_at
+        BOOL event_enabled
+        BOOL event_open_for_delivery
     }
     RELEASE_ATTACHMENT {
         TEXT id PK
         TEXT release_id UK
+        TEXT app_id FK
         TEXT event_id FK
         TEXT attached_at
     }
@@ -56,13 +62,13 @@ erDiagram
 - **Table Specifications**:
     - `EVENT`: Stores the master schedule. All timestamps are ISO-8601 UTC strings.
     - `RELEASE_ATTACHMENT`: Maps a release artifact to an event. `release_id` is indexed and unique.
-    - `APPLICATION`: Stores application configurations. The `environments` column will store JSON text mapping environments (`dev`, `test`, `preprod`, `prod`) to valid jurisdictions (`APAC`, `CH`, `EMEA`, `US`).
+    - `APPLICATION`: Stores application configurations. The `environments` column will store JSON text mapping environments (`dev`, `test`, `preprod`, `prod`) to valid jurisdictions (`APAC`, `CH`, `EMEA`, `US`, `GLOBAL`).
 
 ### Types Updates (src/types.ts)
 
 Need to define zod schemas and types for applications:
 - `EnvironmentSchema`: Enum or literal union for `dev`, `test`, `preprod`, `prod`.
-- `JurisdictionSchema`: Enum or literal union for `APAC`, `CH`, `EMEA`, `US`.
+- `JurisdictionSchema`: Enum or literal union for `APAC`, `CH`, `EMEA`, `US`, `GLOBAL`.
 - `ApplicationSchema`: Schema for application object.
 - `CreateApplicationSchema`: Schema for creating an application.
 
@@ -83,38 +89,3 @@ Additional endpoints to implement:
 - Build Application Management view:
   - Application List Table
   - Create Application Modal/Form with environment-to-jurisdictions selectors.
-
-## Implementation Steps
-
-1. **Step 1: Update Database Schema**
-   - Modify `src/db/sqlite.ts` to include the `CREATE TABLE IF NOT EXISTS application` logic.
-   - Include columns: `id`, `name`, `environments` (JSON text), and `created_at`.
-
-2. **Step 2: Update Data Types**
-   - In `src/types.ts`, add `Environment`, `Jurisdiction`, `Application`, and `CreateApplication` zod schemas and exported TS types.
-
-3. **Step 3: Implement ApplicationRepository**
-   - Create `src/services/ApplicationRepository.ts`.
-   - Implement `createApplication(data: CreateApplication)` saving environments as JSON string.
-   - Implement `getAllApplications()` returning parsed environments JSON.
-
-4. **Step 4: Implement API Endpoints**
-   - Update `src/api/routes.ts`.
-   - Add `POST /applications/` using `ApplicationRepository.createApplication()`.
-   - Add `GET /applications/` using `ApplicationRepository.getAllApplications()`.
-   - Ensure inputs are validated via zod schemas.
-
-5. **Step 5: Write Backend Tests**
-   - Update `src/tests/api.test.ts` to include integration tests for `POST /applications/` and `GET /applications/`.
-
-6. **Step 6: Update Frontend Types & Client**
-   - In `src/ui/src/lib/api/client.ts`, add `Application` type and methods `getApplications()`, `createApplication()`.
-
-7. **Step 7: Build Frontend Components**
-   - Create `ApplicationList` component showing a table of applications.
-   - Create `CreateApplicationModal` with form fields mapping each environment (`dev`, `test`, `preprod`, `prod`) to multiple selection of jurisdictions (`APAC`, `CH`, `EMEA`, `US`).
-   - Add the Application Dashboard to the main page or layout navigation.
-
-8. **Step 8: Run E2E & Verification**
-   - Ensure `npm test` passes for the API.
-   - Run Next.js frontend and manually verify application creation and retrieval flow in the browser.
