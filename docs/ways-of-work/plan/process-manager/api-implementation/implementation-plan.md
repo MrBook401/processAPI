@@ -60,7 +60,7 @@ erDiagram
 ```
 
 - **Table Specifications**:
-    - `EVENT`: Stores the master schedule. All timestamps are ISO-8601 UTC strings.
+    - `EVENT`: Stores the master schedule. All timestamps are ISO-8601 UTC strings. Each phases ( test, preprod, prod can be enabled / disabled separately).
     - `RELEASE_ATTACHMENT`: Maps a release artifact to an event. `release_id` is indexed and unique.
     - `APPLICATION`: Stores application configurations. The `environments` column will store JSON text mapping environments (`dev`, `test`, `preprod`, `prod`) to valid jurisdictions (`APAC`, `CH`, `EMEA`, `US`, `GLOBAL`).
 

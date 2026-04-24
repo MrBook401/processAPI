@@ -56,10 +56,10 @@ curl -X GET http://localhost:3001/events
 ```
 
 ### 3. Update an Event
-Updates specific fields of an existing event. *(Replace `[EVENT_ID]` with the actual ID returned from the creation/list step)*
+Updates specific fields of an existing event. *(Replace `123e4567-e89b-12d3-a456-426614174000` with the actual ID returned from the creation/list step)*
 
 ```bash
-curl -X PATCH http://localhost:3001/events/[EVENT_ID] \
+curl -X PATCH http://localhost:3001/events/123e4567-e89b-12d3-a456-426614174000 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Quarterly Update Q2 - Rescheduled"
@@ -74,7 +74,7 @@ curl -X POST http://localhost:3001/release/attach \
   -H "Content-Type: application/json" \
   -d '{
     "releaseId": "REL-12345",
-    "eventId": "[EVENT_ID]"
+    "eventId": "123e4567-e89b-12d3-a456-426614174000"
   }'
 ```
 
@@ -85,7 +85,7 @@ Calculates if the release falls within any of its attached event's defined time 
 Optionally, pass a `releaseTimestamp` parameter; otherwise, the current server time is used.
 
 ```bash
-curl -X GET "http://localhost:3001/release/validate/id?releaseId=REL-12345&eventId=[EVENT_ID]&releaseTimestamp=2026-05-10T12:00:00Z"
+curl -X GET "http://localhost:3001/release/validate/id?releaseId=REL-12345&eventId=123e4567-e89b-12d3-a456-426614174000&releaseTimestamp=2026-05-10T12:00:00Z"
 ```
 
 ### 6. Create an Application

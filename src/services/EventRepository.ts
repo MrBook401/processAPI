@@ -6,9 +6,9 @@ function mapRowToEvent(row: any): Event {
   return {
     id: row.id,
     name: row.name,
-    test_window: { start: row.test_start, end: row.test_end },
-    preprod_window: { start: row.preprod_start, end: row.preprod_end },
-    prod_window: { start: row.prod_start, end: row.prod_end },
+    test_window: { start: row.test_start, end: row.test_end, enabled: Boolean(row.test_enabled) },
+    preprod_window: { start: row.preprod_start, end: row.preprod_end, enabled: Boolean(row.preprod_enabled) },
+    prod_window: { start: row.prod_start, end: row.prod_end, enabled: Boolean(row.prod_enabled) },
   };
 }
 
@@ -20,17 +20,20 @@ export class EventRepository {
 
     await db.run(
       `INSERT INTO event (
-        id, name, test_start, test_end, preprod_start, preprod_end, prod_start, prod_end, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, name, test_start, test_end, test_enabled, preprod_start, preprod_end, preprod_enabled, prod_start, prod_end, prod_enabled, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.name,
-        data.test_window.start,
-        data.test_window.end,
-        data.preprod_window.start,
-        data.preprod_window.end,
-        data.prod_window.start,
-        data.prod_window.end,
+        data.test_window.start || '0000-00-00T00:00:00Z',
+        data.test_window.end || '0000-00-00T00:00:00Z',
+        data.test_window.enabled ? 1 : 0,
+        data.preprod_window.start || '0000-00-00T00:00:00Z' ,
+        data.preprod_window.end || '0000-00-00T00:00:00Z',
+        data.preprod_window.enabled ? 1 : 0,
+        data.prod_window.start || '0000-00-00T00:00:00Z',
+        data.prod_window.end || '0000-00-00T00:00:00Z',
+        data.prod_window.enabled ? 1 : 0,
         now,
       ]
     );
@@ -69,19 +72,25 @@ export class EventRepository {
         name = ?,
         test_start = ?,
         test_end = ?,
+        test_enabled = ?,
         preprod_start = ?,
         preprod_end = ?,
+        preprod_enabled = ?,
         prod_start = ?,
-        prod_end = ?
+        prod_end = ?,
+        prod_enabled = ?
       WHERE id = ?`,
       [
         updated.name,
         updated.test_window.start,
         updated.test_window.end,
+        updated.test_window.enabled ? 1 : 0,
         updated.preprod_window.start,
         updated.preprod_window.end,
+        updated.preprod_window.enabled ? 1 : 0,
         updated.prod_window.start,
         updated.prod_window.end,
+        updated.prod_window.enabled ? 1 : 0,
         id,
       ]
     );

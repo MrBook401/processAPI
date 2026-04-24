@@ -19,18 +19,18 @@ export default function ProcessManagerDashboard() {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     name: '',
-    testStart: '', testEnd: '',
-    preprodStart: '', preprodEnd: '',
-    prodStart: '', prodEnd: ''
+    testStart: '', testEnd: '', testEnabled: true,
+    preprodStart: '', preprodEnd: '', preprodEnabled: true,
+    prodStart: '', prodEnd: '', prodEnabled: true
   });
 
   const createEventMutation = useMutation({
     mutationFn: async () => {
       await createEvent({
         name: newEvent.name,
-        test_window: { start: new Date(newEvent.testStart).toISOString(), end: new Date(newEvent.testEnd).toISOString() },
-        preprod_window: { start: new Date(newEvent.preprodStart).toISOString(), end: new Date(newEvent.preprodEnd).toISOString() },
-        prod_window: { start: new Date(newEvent.prodStart).toISOString(), end: new Date(newEvent.prodEnd).toISOString() },
+        test_window: { start: new Date(newEvent.testStart).toISOString(), end: new Date(newEvent.testEnd).toISOString(), enabled: newEvent.testEnabled },
+        preprod_window: { start: new Date(newEvent.preprodStart).toISOString(), end: new Date(newEvent.preprodEnd).toISOString(), enabled: newEvent.preprodEnabled },
+        prod_window: { start: new Date(newEvent.prodStart).toISOString(), end: new Date(newEvent.prodEnd).toISOString(), enabled: newEvent.prodEnabled },
       });
     },
     onSuccess: () => {
@@ -101,7 +101,7 @@ export default function ProcessManagerDashboard() {
   };
 
   const environmentsList: Environment[] = ['dev', 'test', 'preprod', 'prod'];
-  const jurisdictionsList: Jurisdiction[] = ['APAC', 'CH', 'EMEA', 'US'];
+  const jurisdictionsList: Jurisdiction[] = ['APAC', 'CH', 'EMEA', 'US', 'GLOBAL'];
 
   return (
     <div className="container mx-auto p-8 max-w-6xl space-y-8">
@@ -125,32 +125,56 @@ export default function ProcessManagerDashboard() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-blue-600">TEST Start</label>
-                    <Input type="datetime-local" value={newEvent.testStart} onChange={(e) => setNewEvent({ ...newEvent, testStart: e.target.value })} />
+                  <div className="col-span-2 flex items-center space-x-2">
+                    <input type="checkbox" checked={newEvent.testEnabled} onChange={(e) => setNewEvent({ ...newEvent, testEnabled: e.target.checked })} />
+                    <label className="text-sm font-medium text-blue-600">TEST Enabled</label>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-blue-600">TEST End</label>
-                    <Input type="datetime-local" value={newEvent.testEnd} onChange={(e) => setNewEvent({ ...newEvent, testEnd: e.target.value })} />
-                  </div>
+                  {newEvent.testEnabled && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-blue-600">TEST Start</label>
+                        <Input type="datetime-local" value={newEvent.testStart} onChange={(e) => setNewEvent({ ...newEvent, testStart: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-blue-600">TEST End</label>
+                        <Input type="datetime-local" value={newEvent.testEnd} onChange={(e) => setNewEvent({ ...newEvent, testEnd: e.target.value })} />
+                      </div>
+                    </>
+                  )}
 
-                  <div>
-                    <label className="text-sm font-medium text-purple-600">PREPROD Start</label>
-                    <Input type="datetime-local" value={newEvent.preprodStart} onChange={(e) => setNewEvent({ ...newEvent, preprodStart: e.target.value })} />
+                  <div className="col-span-2 flex items-center space-x-2 mt-2">
+                    <input type="checkbox" checked={newEvent.preprodEnabled} onChange={(e) => setNewEvent({ ...newEvent, preprodEnabled: e.target.checked })} />
+                    <label className="text-sm font-medium text-purple-600">PREPROD Enabled</label>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-purple-600">PREPROD End</label>
-                    <Input type="datetime-local" value={newEvent.preprodEnd} onChange={(e) => setNewEvent({ ...newEvent, preprodEnd: e.target.value })} />
-                  </div>
+                  {newEvent.preprodEnabled && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-purple-600">PREPROD Start</label>
+                        <Input type="datetime-local" value={newEvent.preprodStart} onChange={(e) => setNewEvent({ ...newEvent, preprodStart: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-purple-600">PREPROD End</label>
+                        <Input type="datetime-local" value={newEvent.preprodEnd} onChange={(e) => setNewEvent({ ...newEvent, preprodEnd: e.target.value })} />
+                      </div>
+                    </>
+                  )}
 
-                  <div>
-                    <label className="text-sm font-medium text-green-600">PROD Start</label>
-                    <Input type="datetime-local" value={newEvent.prodStart} onChange={(e) => setNewEvent({ ...newEvent, prodStart: e.target.value })} />
+                  <div className="col-span-2 flex items-center space-x-2 mt-2">
+                    <input type="checkbox" checked={newEvent.prodEnabled} onChange={(e) => setNewEvent({ ...newEvent, prodEnabled: e.target.checked })} />
+                    <label className="text-sm font-medium text-green-600">PROD Enabled</label>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-green-600">PROD End</label>
-                    <Input type="datetime-local" value={newEvent.prodEnd} onChange={(e) => setNewEvent({ ...newEvent, prodEnd: e.target.value })} />
-                  </div>
+                  {newEvent.prodEnabled && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-green-600">PROD Start</label>
+                        <Input type="datetime-local" value={newEvent.prodStart} onChange={(e) => setNewEvent({ ...newEvent, prodStart: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-green-600">PROD End</label>
+                        <Input type="datetime-local" value={newEvent.prodEnd} onChange={(e) => setNewEvent({ ...newEvent, prodEnd: e.target.value })} />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <Button onClick={() => createEventMutation.mutate()} className="w-full">Save Event</Button>
@@ -174,13 +198,13 @@ export default function ProcessManagerDashboard() {
                 <TableRow key={evt.id}>
                   <TableCell className="font-medium">{evt.name}</TableCell>
                   <TableCell className="text-xs text-blue-600">
-                    {format(new Date(evt.test_window.start), 'MMM dd')} - {format(new Date(evt.test_window.end), 'MMM dd')}
+                    {evt.test_window.enabled ? `${format(new Date(evt.test_window.start), 'MMM dd')} - ${format(new Date(evt.test_window.end), 'MMM dd')}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-purple-600">
-                    {format(new Date(evt.preprod_window.start), 'MMM dd')} - {format(new Date(evt.preprod_window.end), 'MMM dd')}
+                    {evt.preprod_window.enabled ? `${format(new Date(evt.preprod_window.start), 'MMM dd')} - ${format(new Date(evt.preprod_window.end), 'MMM dd')}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-green-600">
-                    {format(new Date(evt.prod_window.start), 'MMM dd')} - {format(new Date(evt.prod_window.end), 'MMM dd')}
+                    {evt.prod_window.enabled ? `${format(new Date(evt.prod_window.start), 'MMM dd')} - ${format(new Date(evt.prod_window.end), 'MMM dd')}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-gray-400">{evt.id}</TableCell>
                 </TableRow>

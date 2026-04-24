@@ -2,43 +2,68 @@ import { Event, TimeWindow, ValidationResponse } from '../types';
 import { isWithinInterval, parseISO } from 'date-fns';
 
 export class WindowCalculationEngine {
-  public validateTiming(event: Event, releaseTimestampStr: string): ValidationResponse {
+  public validateTiming(event: Event, releaseTimestampStr: string, targetEnv: string): ValidationResponse {
     const releaseTime = parseISO(releaseTimestampStr);
 
     const checkWindow = (window: TimeWindow) => {
+      if (!window.enabled || !window.start || !window.end || !targetEnv) return false;
       const start = parseISO(window.start);
       const end = parseISO(window.end);
       return isWithinInterval(releaseTime, { start, end });
     };
 
-    if (checkWindow(event.test_window)) {
-      return {
-        isValid: true,
-        phase: 'TEST',
-        message: `Release is within the TEST window for event ${event.id}.`,
-      };
+    if (targetEnv === 'TEST') {
+      if (checkWindow(event.test_window)) {
+        return {
+          isValid: true,
+          phase: 'TEST',
+          message: `Release is within the TEST window for event ${event.id}.`,
+        }
+      } else {
+        return {
+          isValid: false,
+          phase: 'TEST',
+          message: `Release is within the TEST window for event ${event.id}, but target environment is ${targetEnv}.`,
+        };
+      }
     }
 
-    if (checkWindow(event.preprod_window)) {
-      return {
-        isValid: true,
-        phase: 'PREPROD',
-        message: `Release is within the PREPROD window for event ${event.id}.`,
-      };
+    if (targetEnv === 'PREPROD') {
+      if (checkWindow(event.preprod_window)) {
+        return {
+          isValid: true,
+          phase: 'PREPROD',
+          message: `Release is within the PREPROD window for event ${event.id}.`,
+        }
+      } else {
+        return {
+          isValid: false,
+          phase: 'PREPROD',
+          message: `Release is within the PREPROD window for event ${event.id}, but target environment is ${targetEnv}.`,
+        };
+      }
     }
 
-    if (checkWindow(event.prod_window)) {
+    if (targetEnv === 'PROD') {
+      if (checkWindow(event.prod_window)) {
+        return {
+          isValid: true,
+          phase: 'PROD',
+          message: `Release is within the PROD window for event ${event.id}.`,
+        }
+      } else {
+        return {
+          isValid: false,
+          phase: 'PROD',
+          message: `Release is within the PROD window for event ${event.id}, but target environment is ${targetEnv}.`,
+        };
+      }
+    }
+ 
       return {
-        isValid: true,
-        phase: 'PROD',
-        message: `Release is within the PROD window for event ${event.id}.`,
+        isValid: false,
+        phase: null,
+        message: `Release was created outside of all allowed windows for event ${event.id}.`,
       };
     }
-
-    return {
-      isValid: false,
-      phase: null,
-      message: `Release was created outside of all allowed windows for event ${event.id}.`,
-    };
   }
-}

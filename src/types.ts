@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 export const TimeWindowSchema = z.object({
-  start: z.string().datetime(),
-  end: z.string().datetime(),
+  start: z.string().datetime().nullable(),
+  end: z.string().datetime().nullable(),
+  enabled: z.boolean().default(true),
 });
 
 export const EventSchema = z.object({
@@ -47,7 +48,7 @@ export interface ValidationResponse {
 }
 
 export const EnvironmentSchema = z.enum(['dev', 'test', 'preprod', 'prod']);
-export const JurisdictionSchema = z.enum(['APAC', 'CH', 'EMEA', 'US']);
+export const JurisdictionSchema = z.enum(['APAC', 'CH', 'EMEA', 'US', 'GLOBAL']);
 
 export const ApplicationSchema = z.object({
   id: z.string().uuid(),

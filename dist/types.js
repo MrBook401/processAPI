@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateApplicationSchema = exports.ApplicationSchema = exports.JurisdictionSchema = exports.EnvironmentSchema = exports.AttachReleaseSchema = exports.UpdateEventSchema = exports.CreateEventSchema = exports.EventSchema = exports.TimeWindowSchema = void 0;
 const zod_1 = require("zod");
 exports.TimeWindowSchema = zod_1.z.object({
-    start: zod_1.z.string().datetime(),
-    end: zod_1.z.string().datetime(),
+    start: zod_1.z.string().datetime().nullable(),
+    end: zod_1.z.string().datetime().nullable(),
+    enabled: zod_1.z.boolean().default(true),
 });
 exports.EventSchema = zod_1.z.object({
     id: zod_1.z.string().uuid(),
@@ -25,7 +26,7 @@ exports.AttachReleaseSchema = zod_1.z.object({
     eventId: zod_1.z.string().uuid(),
 });
 exports.EnvironmentSchema = zod_1.z.enum(['dev', 'test', 'preprod', 'prod']);
-exports.JurisdictionSchema = zod_1.z.enum(['APAC', 'CH', 'EMEA', 'US']);
+exports.JurisdictionSchema = zod_1.z.enum(['APAC', 'CH', 'EMEA', 'US', 'GLOBAL']);
 exports.ApplicationSchema = zod_1.z.object({
     id: zod_1.z.string().uuid(),
     name: zod_1.z.string().min(1),

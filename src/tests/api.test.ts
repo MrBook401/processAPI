@@ -55,17 +55,19 @@ describe('API Tests', () => {
 
   it('GET /release/validate/id should validate timing correctly', async () => {
     const res = await request(app)
-      .get(`/release/validate/id?releaseId=REL-12345&eventId=${eventId}&releaseTimestamp=2026-05-16T12:00:00Z`);
+      .get(`/release/validate/id?releaseId=REL-12345&eventId=${eventId}&releaseTimestamp=2026-05-02T12:00:00Z&targetEnv=TEST`);
     expect(res.statusCode).toEqual(200);
     expect(res.body.isValid).toEqual(true);
-    expect(res.body.phase).toEqual('PROD');
+    expect(res.body.phase).toEqual('TEST');
   });
 
   it('GET /release/validate/id should return false outside window', async () => {
     const res = await request(app)
-      .get(`/release/validate/id?releaseId=REL-12345&eventId=${eventId}&releaseTimestamp=2026-04-16T12:00:00Z`);
+      .get(`/release/validate/id?releaseId=REL-12345&eventId=${eventId}&releaseTimestamp=2026-04-16T12:00:00Z&targetEnv=PROD`);
     expect(res.statusCode).toEqual(200);
     expect(res.body.isValid).toEqual(false);
+    expect(res.body.phase).toEqual('PROD');
+
   });
 
   it('POST /applications should create an application', async () => {

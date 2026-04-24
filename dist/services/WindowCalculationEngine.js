@@ -6,6 +6,8 @@ class WindowCalculationEngine {
     validateTiming(event, releaseTimestampStr) {
         const releaseTime = (0, date_fns_1.parseISO)(releaseTimestampStr);
         const checkWindow = (window) => {
+            if (!window.enabled || !window.start || !window.end)
+                return false;
             const start = (0, date_fns_1.parseISO)(window.start);
             const end = (0, date_fns_1.parseISO)(window.end);
             return (0, date_fns_1.isWithinInterval)(releaseTime, { start, end });

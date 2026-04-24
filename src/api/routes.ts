@@ -253,13 +253,13 @@ routes.patch('/release/attach', async (req, res) => {
  *         description: Server error
  */
 routes.get('/release/validate/id', async (req, res) => {
-  const { releaseId, eventId, releaseTimestamp } = req.query;
+  const { releaseId, eventId, releaseTimestamp, targetEnv } = req.query;
 
-  if (typeof releaseId !== 'string' || typeof eventId !== 'string') {
-    return res.status(400).json({ error: 'Missing releaseId or eventId' });
+  if (typeof releaseId !== 'string' || typeof eventId !== 'string' || typeof targetEnv !== 'string') {
+    return res.status(400).json({ error: 'Missing releaseId, eventId, or targetEnv' });
   }
 
-  // Expect releaseTimestamp to be passed, fallback to now if not. In real world this comes from registry.
+  // Expect releaseTimestamp to be passed, fallback to now if not. 
   const timestamp = typeof releaseTimestamp === 'string' ? releaseTimestamp : new Date().toISOString();
 
   try {
@@ -273,7 +273,7 @@ routes.get('/release/validate/id', async (req, res) => {
       return res.status(400).json({ error: 'Release is not attached to this event' });
     }
 
-    const validation = windowEngine.validateTiming(event, timestamp);
+    const validation = windowEngine.validateTiming(event, timestamp, targetEnv );
     res.status(200).json(validation);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

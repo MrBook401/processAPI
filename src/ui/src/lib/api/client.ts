@@ -3,6 +3,7 @@ const API_BASE = 'http://localhost:3001';
 export interface TimeWindow {
   start: string;
   end: string;
+  enabled: boolean;
 }
 
 export interface ProcessEvent {
@@ -46,7 +47,7 @@ export async function validateRelease(releaseId: string, eventId: string) {
 }
 
 export type Environment = 'dev' | 'test' | 'preprod' | 'prod';
-export type Jurisdiction = 'APAC' | 'CH' | 'EMEA' | 'US';
+export type Jurisdiction = 'APAC' | 'CH' | 'EMEA' | 'US' | 'GLOBAL';
 
 export interface Application {
   id: string;
