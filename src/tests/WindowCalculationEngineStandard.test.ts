@@ -71,4 +71,24 @@ describe('WindowCalculationEngine', () => {
     expect(res.isValid).toBe(false);
     expect(res.phase).toBe(null);
   });
+
+  it('invalidates when event is undefined or null', () => {
+    const res = engine.validateTiming(undefined as any, '2026-05-02T12:00:00Z', 'TEST');
+    expect(res.isValid).toBe(false);
+  });
+
+  it('invalidates when releaseTimestamp is malformed', () => {
+    const res = engine.validateTiming(event, 'invalid-date', 'TEST');
+    expect(res.isValid).toBe(false);
+  });
+
+  it('invalidates when releaseTimestamp is null', () => {
+    const res = engine.validateTiming(event, null as any, 'TEST');
+    expect(res.isValid).toBe(false);
+  });
+
+  it('invalidates when targetEnv is invalid', () => {
+    const res = engine.validateTiming(event, '2026-05-02T12:00:00Z', 'INVALID_ENV');
+    expect(res.isValid).toBe(false);
+  });
 });

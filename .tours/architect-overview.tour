@@ -1,0 +1,69 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Architecture Overview",
+  "description": "A deep dive into the Process Manager API architecture, tradeoff decisions, and core patterns.",
+  "isPrimary": true,
+  "steps": [
+    {
+      "file": "src/index.ts",
+      "line": 1,
+      "description": "### Welcome to the Process Manager API\n\n**Situation**: This project manages deployment windows and links software releases to specific events.\n\n**Mechanism**: The architecture follows a straightforward, layered approach: Express.js for routing, a Services layer for business logic, and raw SQLite for persistence. Zod is used for runtime validation.\n\n**Implication**: This lightweight setup enables quick iterations while keeping the boundaries clean and logic isolated.\n\n**Gotcha**: Don't look for an ORM or complex dependency injection; simplicity is preferred here, which makes the learning curve small but requires manual SQL management."
+    },
+    {
+      "file": "src/api/app.ts",
+      "line": 13,
+      "description": "### Express App & Routing\n\n**Situation**: The Express application setup attaches middlewares and routes.\n\n**Mechanism**: `app.use('/', routes)` mounts all endpoints from a single router file. Swagger documentation is generated dynamically.\n\n**Implication**: As an API consumer or developer, this means all route definitions are centralized in one place, making them easy to discover.\n\n**Gotcha**: As the API grows, keeping all routes in one file might become unwieldy, necessitating a split into multiple routers per domain."
+    },
+    {
+      "file": "src/api/routes.ts",
+      "line": 38,
+      "description": "### Input Validation Boundary\n\n**Situation**: This is the entry point for creating an event.\n\n**Mechanism**: We use Zod (`CreateEventSchema.safeParse`) to validate incoming request bodies immediately before executing any logic.\n\n**Implication**: This guarantees that our service layer only receives well-formed data, strictly enforcing the data contract.\n\n**Gotcha**: We must be careful to explicitly handle the `.success === false` case and return a 400 status with the exact validation issues, otherwise the request hangs or errors out opaquely."
+    },
+    {
+      "file": "src/types.ts",
+      "line": 9,
+      "description": "### Single Source of Truth: Types\n\n**Situation**: The `EventSchema` definition using Zod.\n\n**Mechanism**: Zod acts as the single source of truth. We infer TypeScript types (e.g., `export type Event = z.infer<typeof EventSchema>;`) directly from these schemas.\n\n**Implication**: This eliminates the need to maintain TypeScript interfaces and validation schemas separately, reducing drift and errors.\n\n**Gotcha**: Changes to schemas here affect both runtime validation and compile-time types globally across the codebase."
+    },
+    {
+      "file": "src/db/sqlite.ts",
+      "line": 26,
+      "description": "### Database Strategy: SQLite\n\n**Situation**: The database schema initialization.\n\n**Mechanism**: We use SQLite for storage, managing the schema inline with `CREATE TABLE IF NOT EXISTS`.\n\n**Implication**: This avoids the operational overhead of a separate database server and complex migration systems for this lightweight service.\n\n**Gotcha**: In-memory mode (`:memory:`) is used during testing, but concurrent writes in production SQLite might need careful tuning if traffic spikes."
+    },
+    {
+      "file": "src/services/EventRepository.ts",
+      "line": 23,
+      "description": "### Data Access without an ORM\n\n**Situation**: Inserting an event into the database.\n\n**Mechanism**: The repository uses raw SQL parameters (`?`) to execute queries safely, avoiding SQL injection. We generate IDs using Node's `crypto.randomUUID()`.\n\n**Implication**: We maintain absolute control over the queries, avoiding ORM abstractions that can obscure performance issues.\n\n**Gotcha**: Hand-writing SQL means we lack compile-time query checking; we must rely entirely on tests to verify SQL syntax and mapping correctness."
+    },
+    {
+      "file": "src/services/EventRepository.ts",
+      "line": 9,
+      "description": "### Tradeoff: JSON Columns\n\n**Situation**: Reading an event and parsing its data.\n\n**Mechanism**: The `time_windows` object is stored as a stringified JSON column rather than normalized into a separate, relational `time_window` table.\n\n**Implication**: This simplifies the read/write paths for aggregates that are always accessed together, favoring simplicity and read speed over deep queryability.\n\n**Gotcha**: We cannot easily use standard SQL `WHERE` clauses to query deep inside `time_windows` without relying on SQLite-specific JSON extensions."
+    },
+    {
+      "file": "src/api/routes.ts",
+      "line": 159,
+      "description": "### Cross-domain Composition\n\n**Situation**: Fetching releases attached to a specific event.\n\n**Mechanism**: The route handler directly coordinates fetching the event via `eventRepo` and then fetching related releases via `releaseRepo`.\n\n**Implication**: The orchestration logic lives in the route handler rather than a dedicated Application Service or Use Case layer.\n\n**Gotcha**: This works perfectly for simple operations, but as cross-domain rules get complex, logic could leak into the routing layer, reducing testability."
+    },
+    {
+      "file": "src/services/WindowCalculationEngine.ts",
+      "line": 5,
+      "description": "### Core Domain Logic\n\n**Situation**: The window validation engine.\n\n**Mechanism**: This class contains pure business logic. It takes an `Event` and a timestamp, and uses `date-fns` to determine if a release falls within the allowed window.\n\n**Implication**: By decoupling this complex logic from the database and the HTTP layer, we make it extremely easy to unit test exhaustively.\n\n**Gotcha**: The engine assumes that time zones are handled correctly (expecting ISO strings). This can be a classic source of bugs if clients send localized times without offsets."
+    },
+    {
+      "file": "src/services/WindowCalculationEngine.ts",
+      "line": 38,
+      "description": "### Encoding Business Rules\n\n**Situation**: Checking if a deployment window is open indefinitely.\n\n**Mechanism**: A specific business rule is encoded here: if both `start` and `end` dates are `null`, the window is considered always open.\n\n**Implication**: This explicit handling of `null` shows how business rules manage exceptions to strict time boundaries.\n\n**Gotcha**: This logic overrides the standard interval check. Any UI or API consumer must understand that `null` implies \"open for delivery\", not \"unset\" or \"disabled\"."
+    },
+    {
+      "directory": "src/tests",
+      "description": "### Testing Strategy\n\n**Situation**: The `src/tests` folder contains both API integration and isolated unit tests.\n\n**Mechanism**: We have end-to-end API tests (`api.test.ts`) that run against a real in-memory SQLite DB, alongside unit tests targeting the pure calculation engine.\n\n**Implication**: This dual approach gives us high confidence in the overall wiring (DB + Routes) while allowing fast, exhaustive testing of the complex edge cases in the business logic.\n\n**Gotcha**: In-memory SQLite might occasionally behave differently than a file-backed database under high concurrency, although this is rarely an issue for these tests."
+    },
+    {
+      "directory": "src/ui",
+      "description": "### Companion UI Dashboard\n\n**Situation**: The frontend application codebase.\n\n**Mechanism**: It is a Next.js application that runs alongside the API, acting as a dashboard. This effectively makes the repository a \"lite monorepo\".\n\n**Implication**: Full-stack context is kept together, meaning UI changes can be developed and reviewed in the exact same PR as API changes.\n\n**Gotcha**: The UI requires its own `npm install` and runs on a separate port (`3000`). Developers need to spin up both processes manually to test the full loop."
+    },
+    {
+      "description": "### Wrap Up & Next Steps\n\n**Situation**: You've completed the architect tour of the Process Manager API.\n\n**Mechanism**: You've seen the layered architecture, raw SQL data access, pure business logic decoupling, and API validation boundaries.\n\n**Implication**: You are now equipped to navigate the backend, understand where specific logic belongs, and how the layers interact.\n\n**Gotcha**: To test your understanding, try running `npm test` to see the engine and API tests in action. You can also explore the Swagger documentation by running `npm start` and visiting `http://localhost:3001/api-docs`."
+    }
+  ]
+}

@@ -32,6 +32,50 @@ describe('API Tests', () => {
     eventId = res.body.id;
   });
 
+  it('POST /events should return 400 validation error with missing required fields', async () => {
+    const res = await request(app)
+      .post('/events')
+      .send({
+        // Missing name, type, and time_windows
+      });
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('PATCH /events/:id should return 404 not found using a fake UUID', async () => {
+    const fakeId = '00000000-0000-0000-0000-000000000000';
+    const res = await request(app)
+      .patch(`/events/${fakeId}`)
+      .send({ name: 'Updated Name' });
+    expect(res.statusCode).toEqual(404);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('POST /release/attach should return 404 not found using a non-existent event ID', async () => {
+    const fakeId = '00000000-0000-0000-0000-000000000000';
+    const res = await request(app)
+      .post('/release/attach')
+      .send({
+        releaseId: 'REL-FAKE',
+        eventId: fakeId,
+      });
+    expect(res.statusCode).toEqual(404);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('GET /events should return 500 server error if repository throws', async () => {
+    const EventRepository = (await import('../services/EventRepository')).EventRepository;
+    const mockFindAll = jest.spyOn(EventRepository.prototype, 'findAll').mockImplementation(() => {
+      throw new Error('Database connection failed');
+    });
+
+    const res = await request(app).get('/events');
+    expect(res.statusCode).toEqual(500);
+    expect(res.body).toHaveProperty('error');
+    
+    mockFindAll.mockRestore();
+  });
+
   it('POST /events should create an event with test_window and preprod_window enabled but default dates', async () => {
     const res = await request(app)
       .post('/events')

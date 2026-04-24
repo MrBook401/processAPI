@@ -3,13 +3,20 @@ import { isWithinInterval, parseISO } from 'date-fns';
 
 export class WindowCalculationEngine {
   public validateTiming(event: Event, releaseTimestampStr: string, targetEnv: string): ValidationResponse {
-    const releaseTime = parseISO(releaseTimestampStr);
-
     if(!event || !releaseTimestampStr || !targetEnv ){
       return {
         isValid: false,
         phase: null,
         message: `Missing required information: event, release timestamp, or target environment.`,
+      }
+    }
+
+    const releaseTime = parseISO(releaseTimestampStr);
+    if (isNaN(releaseTime.getTime())) {
+      return {
+        isValid: false,
+        phase: null,
+        message: `Invalid release timestamp provided.`,
       }
     }
 

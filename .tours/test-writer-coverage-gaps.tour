@@ -1,0 +1,51 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Coverage Gaps & Missing Tests",
+  "description": "A guide for test writers on what areas of the Process Manager API are currently lacking test coverage.",
+  "isPrimary": false,
+  "steps": [
+    {
+      "file": "src/tests/api.test.ts",
+      "line": 5,
+      "description": "### API Happy Path Coverage\n\n**Situation**: The current API tests (`api.test.ts`).\n\n**Mechanism**: We have extensive happy-path coverage for the core API endpoints (creating events, attaching releases).\n\n**Implication**: We know the endpoints work when given correct data under ideal circumstances.\n\n**Gotcha**: Don't assume high coverage means complete confidence. The error paths (400s, 404s, 500s) are entirely untested."
+    },
+    {
+      "file": "src/api/routes.ts",
+      "line": 40,
+      "description": "### Missing: Validation Error Tests\n\n**Situation**: The Zod validation error branch.\n\n**Mechanism**: If `CreateEventSchema.safeParse` fails, we return a 400 Bad Request with details.\n\n**Implication**: We need tests that deliberately send malformed data (e.g., missing names or invalid dates) to ensure our API correctly rejects it.\n\n**Gotcha**: Zod errors can be verbose; we must test that the exact JSON structure we return is what frontend clients expect."
+    },
+    {
+      "file": "src/api/routes.ts",
+      "line": 46,
+      "description": "### Missing: Server Error (500) Tests\n\n**Situation**: The server error `catch` blocks.\n\n**Mechanism**: Every route has a `catch (err)` block returning a 500 status if the database or logic throws an unhandled exception.\n\n**Implication**: This is completely uncovered. We should use mocking (e.g., `jest.spyOn`) to simulate DB failures and ensure the app responds correctly instead of crashing.\n\n**Gotcha**: Without explicit mocking, these lines are unreachable in standard integration tests."
+    },
+    {
+      "file": "src/api/routes.ts",
+      "line": 118,
+      "description": "### Missing: Not Found (404) Tests\n\n**Situation**: The 404 branch for updating an event.\n\n**Mechanism**: Updating an event that doesn't exist returns a 404 Not Found.\n\n**Implication**: We need tests that send a random UUID to `PATCH /events/:id` and assert it receives a 404.\n\n**Gotcha**: The DB itself doesn't throw an error when updating zero rows; it just returns null from the subsequent `findById`. Testing this confirms the routing layer translates it correctly."
+    },
+    {
+      "file": "src/api/routes.ts",
+      "line": 204,
+      "description": "### Missing: Relational Integrity Tests\n\n**Situation**: Attaching a release to an event.\n\n**Mechanism**: Attaching a release requires the event to exist. We manually check `eventRepo.findById` and return 404 if it doesn't.\n\n**Implication**: There are no tests attempting to attach a release to a non-existent event ID.\n\n**Gotcha**: Because SQLite might not enforce foreign keys by default unless explicitly enabled at the connection level, this application-level check is critical to test."
+    },
+    {
+      "file": "src/services/EventRepository.ts",
+      "line": 50,
+      "description": "### Missing: Isolated Repository Unit Tests\n\n**Situation**: The data access layer.\n\n**Mechanism**: The repository handles raw SQL queries and mapping.\n\n**Implication**: Currently, there are no isolated unit tests for the repositories; they are only tested indirectly via the API tests.\n\n**Gotcha**: If someone refactors a complex SQL query, they'd have to run the slower integration tests to verify it. Unit tests here would provide faster, more precise feedback."
+    },
+    {
+      "file": "src/services/WindowCalculationEngine.ts",
+      "line": 8,
+      "description": "### Missing: Domain Engine Edge Cases\n\n**Situation**: The core window calculation logic.\n\n**Mechanism**: The engine explicitly checks if required parameters are missing and returns a graceful `isValid: false` object.\n\n**Implication**: The engine tests (`WindowCalculationEngineStandard.test.ts`) do not test passing `undefined` or null fields at runtime.\n\n**Gotcha**: While TypeScript protects us at compile time, at runtime (e.g., when parsing API payloads) we want to ensure it handles bad inputs gracefully without throwing type errors."
+    },
+    {
+      "file": "src/ui/README.md",
+      "line": 1,
+      "description": "### Missing: Frontend UI Tests\n\n**Situation**: The Next.js dashboard application.\n\n**Mechanism**: The `src/ui` directory contains the frontend, but there are no tests (`jest`, `cypress`, or `playwright`) configured for it.\n\n**Implication**: The entire frontend is currently untested automatically.\n\n**Gotcha**: UI testing requires a completely different setup (like React Testing Library or E2E frameworks) compared to the backend Express tests."
+    },
+    {
+      "description": "### Summary: Where to Start\n\n**Situation**: You've seen the gaps in the current test suite.\n\n**Mechanism**: The missing tests span from API edge cases (400/404/500 responses) to isolated unit tests for Repositories, and full UI test coverage.\n\n**Implication**: Adding these tests will significantly increase confidence in the system's robustness, especially around error handling.\n\n**Gotcha**: Start with the highest ROI: add the 400 Validation Error tests and 404 Not Found tests to `api.test.ts` first, as they are the most likely paths for users to hit."
+    }
+  ]
+}
