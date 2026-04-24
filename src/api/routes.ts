@@ -124,6 +124,47 @@ routes.patch('/events/:id', async (req, res) => {
 
 /**
  * @openapi
+ * /events/{id}/releases:
+ *   get:
+ *     summary: Retrieve all releases attached to an event
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The event ID
+ *     responses:
+ *       200:
+ *         description: A list of release attachments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ReleaseAttachment'
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
+routes.get('/events/:id/releases', async (req, res) => {
+  try {
+    const event = await eventRepo.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const releases = await releaseRepo.findByEventId(req.params.id);
+    res.status(200).json(releases);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @openapi
  * /release/attach:
  *   post:
  *     summary: Attach a release to an event

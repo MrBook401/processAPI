@@ -124,6 +124,46 @@ exports.routes.patch('/events/:id', async (req, res) => {
 });
 /**
  * @openapi
+ * /events/{id}/releases:
+ *   get:
+ *     summary: Retrieve all releases attached to an event
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The event ID
+ *     responses:
+ *       200:
+ *         description: A list of release attachments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ReleaseAttachment'
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
+exports.routes.get('/events/:id/releases', async (req, res) => {
+    try {
+        const event = await eventRepo.findById(req.params.id);
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        const releases = await releaseRepo.findByEventId(req.params.id);
+        res.status(200).json(releases);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+/**
+ * @openapi
  * /release/attach:
  *   post:
  *     summary: Attach a release to an event
@@ -153,6 +193,10 @@ exports.routes.post('/release/attach', async (req, res) => {
         return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
     }
     try {
+        const existingAttachment = await releaseRepo.findByReleaseId(parseResult.data.releaseId);
+        if (existingAttachment) {
+            return res.status(400).json({ error: 'Release already attached to an event' });
+        }
         // Make sure event exists
         const event = await eventRepo.findById(parseResult.data.eventId);
         if (!event) {
@@ -160,6 +204,42 @@ exports.routes.post('/release/attach', async (req, res) => {
         }
         const attachment = await releaseRepo.attach(parseResult.data);
         res.status(201).json(attachment);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+/**
+ * @openapi
+ * /release/attach/{releaseId}:
+ *   delete:
+ *     summary: Detach a release from an event
+ *     parameters:
+ *       - in: path
+ *         name: releaseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The release ID
+ *     responses:
+ *       200:
+ *         description: Successfully detached release
+ *       404:
+ *         description: Release attachment not found
+ *       500:
+ *         description: Server error
+ */
+exports.routes.delete('/release/attach/:releaseId', async (req, res) => {
+    const { releaseId } = req.params;
+    if (!releaseId) {
+        return res.status(400).json({ error: 'Missing releaseId' });
+    }
+    try {
+        const detached = await releaseRepo.detach(releaseId);
+        if (!detached) {
+            return res.status(404).json({ error: 'Release attachment not found' });
+        }
+        res.status(200).json({ message: 'Successfully detached release' });
     }
     catch (err) {
         res.status(500).json({ error: err.message });
@@ -248,11 +328,11 @@ exports.routes.patch('/release/attach', async (req, res) => {
  *         description: Server error
  */
 exports.routes.get('/release/validate/id', async (req, res) => {
-    const { releaseId, eventId, releaseTimestamp } = req.query;
-    if (typeof releaseId !== 'string' || typeof eventId !== 'string') {
-        return res.status(400).json({ error: 'Missing releaseId or eventId' });
+    const { releaseId, eventId, releaseTimestamp, targetEnv } = req.query;
+    if (typeof releaseId !== 'string' || typeof eventId !== 'string' || typeof targetEnv !== 'string') {
+        return res.status(400).json({ error: 'Missing releaseId, eventId, or targetEnv' });
     }
-    // Expect releaseTimestamp to be passed, fallback to now if not. In real world this comes from registry.
+    // Expect releaseTimestamp to be passed, fallback to now if not. 
     const timestamp = typeof releaseTimestamp === 'string' ? releaseTimestamp : new Date().toISOString();
     try {
         const event = await eventRepo.findById(eventId);
@@ -263,7 +343,7 @@ exports.routes.get('/release/validate/id', async (req, res) => {
         if (!attachment || attachment.eventId !== eventId) {
             return res.status(400).json({ error: 'Release is not attached to this event' });
         }
-        const validation = windowEngine.validateTiming(event, timestamp);
+        const validation = windowEngine.validateTiming(event, timestamp, targetEnv);
         res.status(200).json(validation);
     }
     catch (err) {

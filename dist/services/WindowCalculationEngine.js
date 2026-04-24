@@ -3,35 +3,53 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WindowCalculationEngine = void 0;
 const date_fns_1 = require("date-fns");
 class WindowCalculationEngine {
-    validateTiming(event, releaseTimestampStr) {
+    validateTiming(event, releaseTimestampStr, targetEnv) {
         const releaseTime = (0, date_fns_1.parseISO)(releaseTimestampStr);
+        if (!event || !releaseTimestampStr || !targetEnv) {
+            return {
+                isValid: false,
+                phase: null,
+                message: `Missing required information: event, release timestamp, or target environment.`,
+            };
+        }
         const checkWindow = (window) => {
-            if (!window.enabled || !window.start || !window.end)
+            if (!window || !window.enabled || !window.start || !window.end)
                 return false;
-            const start = (0, date_fns_1.parseISO)(window.start);
-            const end = (0, date_fns_1.parseISO)(window.end);
+            const start = window.start;
+            const end = window.end;
             return (0, date_fns_1.isWithinInterval)(releaseTime, { start, end });
         };
-        if (checkWindow(event.test_window)) {
+        if (!event.event_enabled || !event.event_open_for_delivery) {
             return {
-                isValid: true,
-                phase: 'TEST',
-                message: `Release is within the TEST window for event ${event.id}.`,
+                isValid: false,
+                phase: null,
+                message: `Event ${event.id} is not enabled or not open for delivery.`,
             };
         }
-        if (checkWindow(event.preprod_window)) {
-            return {
-                isValid: true,
-                phase: 'PREPROD',
-                message: `Release is within the PREPROD window for event ${event.id}.`,
-            };
-        }
-        if (checkWindow(event.prod_window)) {
-            return {
-                isValid: true,
-                phase: 'PROD',
-                message: `Release is within the PROD window for event ${event.id}.`,
-            };
+        const envKey = targetEnv.toLowerCase();
+        if (['test', 'preprod', 'prod'].includes(envKey)) {
+            // null dates mean the window is open, so we consider it valid without checking the time
+            if (event.time_windows[envKey].start === null && event.time_windows[envKey].end === null) {
+                return {
+                    isValid: true,
+                    phase: targetEnv,
+                    message: `No controls on time window needed`,
+                };
+            }
+            if (checkWindow(event.time_windows[envKey])) {
+                return {
+                    isValid: true,
+                    phase: targetEnv,
+                    message: `Release is within the ${targetEnv} window for event ${event.id}.`,
+                };
+            }
+            else {
+                return {
+                    isValid: false,
+                    phase: targetEnv,
+                    message: `Release is not within the ${targetEnv} window for event ${event.id}`,
+                };
+            }
         }
         return {
             isValid: false,

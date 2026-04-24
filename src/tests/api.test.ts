@@ -74,6 +74,14 @@ describe('API Tests', () => {
     expect(res.body.releaseId).toEqual('REL-12345');
   });
 
+  it('GET /events/:id/releases should get releases attached to an event', async () => {
+    const res = await request(app).get(`/events/${eventId}/releases`);
+    expect(res.statusCode).toEqual(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toEqual(1);
+    expect(res.body[0].releaseId).toEqual('REL-12345');
+  });
+
   it('GET /release/validate/id should validate timing correctly', async () => {
     const res = await request(app)
       .get(`/release/validate/id?releaseId=REL-12345&eventId=${eventId}&releaseTimestamp=2026-05-02T12:00:00Z&targetEnv=TEST`);

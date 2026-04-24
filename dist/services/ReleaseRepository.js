@@ -24,6 +24,11 @@ class ReleaseRepository {
             attachedAt: row.attached_at,
         };
     }
+    async detach(releaseId) {
+        const db = await (0, sqlite_1.getDb)();
+        const result = await db.run(`DELETE FROM release_attachment WHERE release_id = ?`, [releaseId]);
+        return (result.changes ?? 0) > 0;
+    }
     async findByReleaseId(releaseId) {
         const db = await (0, sqlite_1.getDb)();
         const row = await db.get(`SELECT * FROM release_attachment WHERE release_id = ?`, [releaseId]);
@@ -35,6 +40,16 @@ class ReleaseRepository {
             eventId: row.event_id,
             attachedAt: row.attached_at,
         };
+    }
+    async findByEventId(eventId) {
+        const db = await (0, sqlite_1.getDb)();
+        const rows = await db.all(`SELECT * FROM release_attachment WHERE event_id = ?`, [eventId]);
+        return rows.map(row => ({
+            id: row.id,
+            releaseId: row.release_id,
+            eventId: row.event_id,
+            attachedAt: row.attached_at,
+        }));
     }
 }
 exports.ReleaseRepository = ReleaseRepository;

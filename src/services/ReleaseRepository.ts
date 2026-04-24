@@ -55,4 +55,19 @@ export class ReleaseRepository {
       attachedAt: row.attached_at,
     };
   }
+
+  async findByEventId(eventId: string): Promise<ReleaseAttachment[]> {
+    const db = await getDb();
+    const rows = await db.all(
+      `SELECT * FROM release_attachment WHERE event_id = ?`,
+      [eventId]
+    );
+
+    return rows.map(row => ({
+      id: row.id,
+      releaseId: row.release_id,
+      eventId: row.event_id,
+      attachedAt: row.attached_at,
+    }));
+  }
 }
