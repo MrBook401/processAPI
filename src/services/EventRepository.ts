@@ -30,7 +30,8 @@ export class EventRepository {
     const db = await getDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    
+    const TimeWindows = JSON.stringify(data.test_window);
+
 
     
     await db.run(

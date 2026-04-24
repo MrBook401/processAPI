@@ -41,7 +41,6 @@ describe('API Tests', () => {
     if (res.statusCode !== 201) console.error(res.body);
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('id');
-    eventId = res.body.id;
   });
 
   it('GET /events should list events', async () => {

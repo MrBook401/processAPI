@@ -30,18 +30,11 @@ erDiagram
     EVENT {
         TEXT id PK
         TEXT name
-        TEXT test_start
-        TEXT test_end
-        BOOL test_enabled 
-        TEXT preprod_start
-        TEXT preprod_end
-        BOOL preprod_enabled 
-        TEXT prod_start
-        TEXT prod_end
-        BOOL prod_enabled
+        TEXT time_windows 
         TEXT created_at
         BOOL event_enabled
         BOOL event_open_for_delivery
+        TEXT type 
     }
     RELEASE_ATTACHMENT {
         TEXT id PK
@@ -60,7 +53,7 @@ erDiagram
 ```
 
 - **Table Specifications**:
-    - `EVENT`: Stores the master schedule. All timestamps are ISO-8601 UTC strings. Each phases ( test, preprod, prod can be enabled / disabled separately).
+    - `EVENT`: Stores the master schedule. All timestamps are ISO-8601 UTC strings.  The `time_windows` column will store JSON text mapping environement ( `test`, `preprod`, `prod` ) to valid time windows (start time, end time and a flag to enable or disable the time window)
     - `RELEASE_ATTACHMENT`: Maps a release artifact to an event. `release_id` is indexed and unique.
     - `APPLICATION`: Stores application configurations. The `environments` column will store JSON text mapping environments (`dev`, `test`, `preprod`, `prod`) to valid jurisdictions (`APAC`, `CH`, `EMEA`, `US`, `GLOBAL`).
 
