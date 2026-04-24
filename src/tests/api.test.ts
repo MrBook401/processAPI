@@ -116,4 +116,83 @@ describe('API Tests', () => {
     expect(res.body[0]).toHaveProperty('id');
     expect(res.body[0]).toHaveProperty('environments');
   });
+
+  describe('Release Attachment Scenarios', () => {
+    let event1Id: string;
+    let event2Id: string;
+    const releaseId = 'REL-TEST-SCENARIO-1';
+
+    it('should create 2 events with a week difference for the prod time window date', async () => {
+      // Create first event
+      const res1 = await request(app)
+        .post('/events')
+        .send({
+          name: 'Event 1 - Prod Week 1',
+          type: 'standard',
+          time_windows: {
+            test: { start: null, end: null, enabled: false },
+            preprod: { start: null, end: null, enabled: false },
+            prod: { start: '2026-06-01T00:00:00Z', end: '2026-06-07T23:59:59Z', enabled: true },
+          }
+        });
+      expect(res1.statusCode).toEqual(201);
+      event1Id = res1.body.id;
+
+      // Create second event (week difference)
+      const res2 = await request(app)
+        .post('/events')
+        .send({
+          name: 'Event 2 - Prod Week 2',
+          type: 'standard',
+          time_windows: {
+            test: { start: null, end: null, enabled: false },
+            preprod: { start: null, end: null, enabled: false },
+            prod: { start: '2026-06-08T00:00:00Z', end: '2026-06-14T23:59:59Z', enabled: true },
+          }
+        });
+      expect(res2.statusCode).toEqual(201);
+      event2Id = res2.body.id;
+    });
+
+    it('should attach the release to the first event (expect success)', async () => {
+      const res = await request(app)
+        .post('/release/attach')
+        .send({
+          releaseId,
+          eventId: event1Id,
+        });
+      expect(res.statusCode).toEqual(201);
+      expect(res.body.releaseId).toEqual(releaseId);
+      expect(res.body.eventId).toEqual(event1Id);
+    });
+
+    it('should fail to attach the release to the second event (expect failure as it is already attached to another event)', async () => {
+      const res = await request(app)
+        .post('/release/attach')
+        .send({
+          releaseId,
+          eventId: event2Id,
+        });
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.error).toEqual('Release already attached to an event');
+    });
+
+    it('should detach the release from the first event (expect success)', async () => {
+      const res = await request(app).delete(`/release/attach/${releaseId}`);
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.message).toEqual('Successfully detached release');
+    });
+
+    it('should attach the release to the second event (expect success)', async () => {
+      const res = await request(app)
+        .post('/release/attach')
+        .send({
+          releaseId,
+          eventId: event2Id,
+        });
+      expect(res.statusCode).toEqual(201);
+      expect(res.body.releaseId).toEqual(releaseId);
+      expect(res.body.eventId).toEqual(event2Id);
+    });
+  });
 });

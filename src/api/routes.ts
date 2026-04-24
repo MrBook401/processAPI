@@ -154,6 +154,11 @@ routes.post('/release/attach', async (req, res) => {
   }
 
   try {
+    const existingAttachment = await releaseRepo.findByReleaseId(parseResult.data.releaseId);
+    if (existingAttachment) {
+      return res.status(400).json({ error: 'Release already attached to an event' });
+    }
+
     // Make sure event exists
     const event = await eventRepo.findById(parseResult.data.eventId);
     if (!event) {
@@ -162,6 +167,44 @@ routes.post('/release/attach', async (req, res) => {
 
     const attachment = await releaseRepo.attach(parseResult.data);
     res.status(201).json(attachment);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @openapi
+ * /release/attach/{releaseId}:
+ *   delete:
+ *     summary: Detach a release from an event
+ *     parameters:
+ *       - in: path
+ *         name: releaseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The release ID
+ *     responses:
+ *       200:
+ *         description: Successfully detached release
+ *       404:
+ *         description: Release attachment not found
+ *       500:
+ *         description: Server error
+ */
+routes.delete('/release/attach/:releaseId', async (req, res) => {
+  const { releaseId } = req.params;
+  
+  if (!releaseId) {
+    return res.status(400).json({ error: 'Missing releaseId' });
+  }
+
+  try {
+    const detached = await releaseRepo.detach(releaseId);
+    if (!detached) {
+      return res.status(404).json({ error: 'Release attachment not found' });
+    }
+    res.status(200).json({ message: 'Successfully detached release' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

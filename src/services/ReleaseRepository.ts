@@ -30,6 +30,15 @@ export class ReleaseRepository {
     };
   }
 
+  async detach(releaseId: string): Promise<boolean> {
+    const db = await getDb();
+    const result = await db.run(
+      `DELETE FROM release_attachment WHERE release_id = ?`,
+      [releaseId]
+    );
+    return (result.changes ?? 0) > 0;
+  }
+
   async findByReleaseId(releaseId: string): Promise<ReleaseAttachment | null> {
     const db = await getDb();
     const row = await db.get(
