@@ -108,6 +108,10 @@ export default function ProcessManagerDashboard() {
   const environmentsList: Environment[] = ['dev', 'test', 'preprod', 'prod'];
   const jurisdictionsList: Jurisdiction[] = ['APAC', 'CH', 'EMEA', 'US', 'GLOBAL'];
 
+  const formatDate = (dateStr: string | null | undefined) => {
+    return dateStr ? format(new Date(dateStr), 'MMM dd') : 'open';
+  };
+
   return (
     <div className="container mx-auto p-8 max-w-6xl space-y-8">
       <h1 className="text-3xl font-bold">Release Planner Dashboard</h1>
@@ -203,13 +207,13 @@ export default function ProcessManagerDashboard() {
                 <TableRow key={evt.id}>
                   <TableCell className="font-medium">{evt.name}</TableCell>
                   <TableCell className="text-xs text-blue-600">
-                    {evt.time_windows.test.enabled ? `${format(new Date(evt.time_windows.test.start), 'MMM dd')} - ${format(new Date(evt.time_windows.test.end), 'MMM dd')}` : 'Disabled'}
+                    {evt.time_windows.test.enabled ? `${formatDate(evt.time_windows.test.start)} - ${formatDate(evt.time_windows.test.end)}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-purple-600">
-                    {evt.time_windows.preprod.enabled ? `${format(new Date(evt.time_windows.preprod.start), 'MMM dd')} - ${format(new Date(evt.time_windows.preprod.end), 'MMM dd')}` : 'Disabled'}
+                    {evt.time_windows.preprod.enabled ? `${formatDate(evt.time_windows.preprod.start)} - ${formatDate(evt.time_windows.preprod.end)}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-green-600">
-                    {evt.time_windows.prod.enabled ? `${format(new Date(evt.time_windows.prod.start), 'MMM dd')} - ${format(new Date(evt.time_windows.prod.end), 'MMM dd')}` : 'Disabled'}
+                    {evt.time_windows.prod.enabled ? `${formatDate(evt.time_windows.prod.start)} - ${formatDate(evt.time_windows.prod.end)}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-gray-400">{evt.id}</TableCell>
                 </TableRow>

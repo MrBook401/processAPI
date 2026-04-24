@@ -14,19 +14,6 @@ function mapRowToEvent(row: any): Event {
   };
 }
 
-function replaceUndefinedWithNull(obj: any): any {
-  if (obj && typeof obj === 'object') {
-    for (const key in obj) {
-      if (obj[key] === undefined) {
-        obj[key] = null;
-      } else if (typeof obj[key] === 'object') {
-        replaceUndefinedWithNull(obj[key]);
-      }
-    }
-  }
-  return obj;
-}
-
 export class EventRepository {
   async create(data: CreateEvent): Promise<Event> {
     const db = await getDb();

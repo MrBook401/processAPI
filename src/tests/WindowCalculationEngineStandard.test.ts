@@ -12,15 +12,15 @@ describe('WindowCalculationEngine', () => {
     event_open_for_delivery: true,
     type: 'standard',
     time_windows: {
-      test: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z', enabled: false },
-      preprod: { start: '2026-05-08T00:00:00Z', end: '2026-05-14T23:59:59Z', enabled: true },
+      test: { start: null, end: null, enabled: true },
+      preprod: { start: null, end: null, enabled: true },
       prod: { start: '2026-05-15T00:00:00Z', end: '2026-05-20T23:59:59Z', enabled: true },
     }
   };
 
   it('validates inside TEST window', () => {
     const res = engine.validateTiming(event, '2026-05-02T12:00:00Z', 'TEST');
-    expect(res.isValid).toBe(false);
+    expect(res.isValid).toBe(true);
     expect(res.phase).toBe('TEST');
   });
 
@@ -54,6 +54,20 @@ describe('WindowCalculationEngine', () => {
       time_windows: { ...event.time_windows, test: { ...event.time_windows.test, enabled: false } }
     };
     const res = engine.validateTiming(disabledEvent, '2026-05-02T12:00:00Z', 'null');
+    expect(res.isValid).toBe(false);
+    expect(res.phase).toBe(null);
+  });
+
+  it('invalidates when event is disabled', () => {
+    const disabledEvent = { ...event, event_enabled: false };
+    const res = engine.validateTiming(disabledEvent, '2026-05-02T12:00:00Z', 'TEST');
+    expect(res.isValid).toBe(false);
+    expect(res.phase).toBe(null);
+  });
+
+  it('invalidates when event is not open for delivery', () => {
+    const disabledEvent = { ...event, event_open_for_delivery: false };
+    const res = engine.validateTiming(disabledEvent, '2026-05-02T12:00:00Z', 'TEST');
     expect(res.isValid).toBe(false);
     expect(res.phase).toBe(null);
   });
