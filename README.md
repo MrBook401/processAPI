@@ -42,9 +42,30 @@ curl -X POST http://localhost:3001/events \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Quarterly Update Q2",
-    "test_window": { "start": "2026-05-01T00:00:00Z", "end": "2026-05-07T23:59:59Z", "enabled":true},
-    "preprod_window": { "start": "2026-05-08T00:00:00Z", "end": "2026-05-14T23:59:59Z" },
-    "prod_window": { "start": "2026-05-15T00:00:00Z", "end": "2026-05-20T23:59:59Z" }
+    "time_windows": {
+      "test": { "start": "2026-05-01T00:00:00Z", "end": "2026-05-07T23:59:59Z", "enabled": true },
+      "preprod": { "start": "2026-05-08T00:00:00Z", "end": "2026-05-14T23:59:59Z", "enabled": true },
+      "prod": { "start": "2026-05-15T00:00:00Z", "end": "2026-05-20T23:59:59Z", "enabled": true }
+    },
+    "event_enabled": true,
+    "event_open_for_delivery": true,
+    "type": "standard"
+  }'
+```
+
+```bash
+curl -X POST http://localhost:3001/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Quarterly Update Q2",
+    "time_windows": {
+      "test": {  "enabled": true },
+      "preprod": { "start": "2026-05-08T00:00:00Z", "end": "2026-05-14T23:59:59Z", "enabled": true },
+      "prod": { "start": "2026-05-15T00:00:00Z", "end": "2026-05-20T23:59:59Z", "enabled": true }
+    },
+    "event_enabled": true,
+    "event_open_for_delivery": true,
+    "type": "standard"
   }'
 ```
 
@@ -81,11 +102,11 @@ curl -X POST http://localhost:3001/release/attach \
 *(To change the event for an existing release, you can send the same payload with a `PATCH` request to `/release/attach`)*
 
 ### 5. Validate a Release's Timing
-Calculates if the release falls within any of its attached event's defined time windows. 
-Optionally, pass a `releaseTimestamp` parameter; otherwise, the current server time is used.
+Calculates if the release falls within its attached event's defined time window for the specified target environment. 
+A `targetEnv` is required. Optionally, pass a `releaseTimestamp` parameter; otherwise, the current server time is used.
 
 ```bash
-curl -X GET "http://localhost:3001/release/validate/id?releaseId=REL-12345&eventId=123e4567-e89b-12d3-a456-426614174000&releaseTimestamp=2026-05-10T12:00:00Z"
+curl -X GET "http://localhost:3001/release/validate/id?releaseId=REL-12345&eventId=123e4567-e89b-12d3-a456-426614174000&targetEnv=prod&releaseTimestamp=2026-05-10T12:00:00Z"
 ```
 
 ### 6. Create an Application
