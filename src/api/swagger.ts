@@ -17,6 +17,7 @@ const options: swaggerJsdoc.Options = {
           properties: {
             start: { type: 'string', format: 'date-time' },
             end: { type: 'string', format: 'date-time' },
+            enabled: { type: 'boolean', default: true },
           },
           required: ['start', 'end'],
         },
@@ -25,28 +26,53 @@ const options: swaggerJsdoc.Options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             name: { type: 'string' },
-            test_window: { $ref: '#/components/schemas/TimeWindow' },
-            preprod_window: { $ref: '#/components/schemas/TimeWindow' },
-            prod_window: { $ref: '#/components/schemas/TimeWindow' },
+            time_windows: {
+              type: 'object',
+              properties: {
+                test: { $ref: '#/components/schemas/TimeWindow' },
+                preprod: { $ref: '#/components/schemas/TimeWindow' },
+                prod: { $ref: '#/components/schemas/TimeWindow' },
+              },
+            },
+            created_at: { type: 'string', format: 'date-time' },
+            event_enabled: { type: 'boolean' },
+            event_open_for_delivery: { type: 'boolean' },
+            type: { type: 'string' },
           },
         },
         CreateEvent: {
           type: 'object',
           properties: {
             name: { type: 'string' },
-            test_window: { $ref: '#/components/schemas/TimeWindow' },
-            preprod_window: { $ref: '#/components/schemas/TimeWindow' },
-            prod_window: { $ref: '#/components/schemas/TimeWindow' },
+            time_windows: {
+              type: 'object',
+              properties: {
+                test: { $ref: '#/components/schemas/TimeWindow' },
+                preprod: { $ref: '#/components/schemas/TimeWindow' },
+                prod: { $ref: '#/components/schemas/TimeWindow' },
+              },
+            },
+            event_enabled: { type: 'boolean', default: true },
+            event_open_for_delivery: { type: 'boolean', default: true },
+            type: { type: 'string', default: 'standard' },
           },
-          required: ['name', 'test_window', 'preprod_window', 'prod_window'],
+          required: ['name', 'time_windows'],
         },
         UpdateEvent: {
           type: 'object',
           properties: {
             name: { type: 'string' },
-            test_window: { $ref: '#/components/schemas/TimeWindow' },
-            preprod_window: { $ref: '#/components/schemas/TimeWindow' },
-            prod_window: { $ref: '#/components/schemas/TimeWindow' },
+            time_windows: {
+              type: 'object',
+              properties: {
+                test: { $ref: '#/components/schemas/TimeWindow' },
+                preprod: { $ref: '#/components/schemas/TimeWindow' },
+                prod: { $ref: '#/components/schemas/TimeWindow' },
+              },
+            },
+            event_enabled: { type: 'boolean' },
+            event_open_for_delivery: { type: 'boolean' },
+            type: { type: 'string' },
           },
         },
         AttachRelease: {

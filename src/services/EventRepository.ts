@@ -6,9 +6,11 @@ function mapRowToEvent(row: any): Event {
   return {
     id: row.id,
     name: row.name,
-    test_window: { start: row.test_start, end: row.test_end, enabled: Boolean(row.test_enabled) },
-    preprod_window: { start: row.preprod_start, end: row.preprod_end, enabled: Boolean(row.preprod_enabled) },
-    prod_window: { start: row.prod_start, end: row.prod_end, enabled: Boolean(row.prod_enabled) },
+    time_windows: JSON.parse(row.time_windows),
+    created_at: row.created_at,
+    event_enabled: Boolean(row.event_enabled),
+    event_open_for_delivery: Boolean(row.event_open_for_delivery),
+    type: row.type,
   };
 }
 
@@ -30,27 +32,19 @@ export class EventRepository {
     const db = await getDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    const TimeWindows = JSON.stringify(data.test_window);
-
-
     
     await db.run(
       `INSERT INTO event (
-        id, name, test_start, test_end, test_enabled, preprod_start, preprod_end, preprod_enabled, prod_start, prod_end, prod_enabled, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, name, time_windows, created_at, event_enabled, event_open_for_delivery, type
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.name,
-        data.test_window.start ?? now,
-        data.test_window.end ?? data.prod_window.start,
-        data.test_window.enabled ? 1 : 0,
-        data.preprod_window.start ?? now,
-        data.preprod_window.end ?? data.prod_window.start,
-        data.preprod_window.enabled ? 1 : 0,
-        data.prod_window.start,
-        data.prod_window.end,
-        data.prod_window.enabled ? 1 : 0,
+        JSON.stringify(data.time_windows),
         now,
+        data.event_enabled ? 1 : 0,
+        data.event_open_for_delivery ? 1 : 0,
+        data.type,
       ]
     );
 
@@ -78,35 +72,26 @@ export class EventRepository {
 
     const updated = {
       name: data.name ?? existing.name,
-      test_window: data.test_window ?? existing.test_window,
-      preprod_window: data.preprod_window ?? existing.preprod_window,
-      prod_window: data.prod_window ?? existing.prod_window,
+      time_windows: data.time_windows ?? existing.time_windows,
+      event_enabled: data.event_enabled ?? existing.event_enabled,
+      event_open_for_delivery: data.event_open_for_delivery ?? existing.event_open_for_delivery,
+      type: data.type ?? existing.type,
     };
 
     await db.run(
       `UPDATE event SET
         name = ?,
-        test_start = ?,
-        test_end = ?,
-        test_enabled = ?,
-        preprod_start = ?,
-        preprod_end = ?,
-        preprod_enabled = ?,
-        prod_start = ?,
-        prod_end = ?,
-        prod_enabled = ?
+        time_windows = ?,
+        event_enabled = ?,
+        event_open_for_delivery = ?,
+        type = ?
       WHERE id = ?`,
       [
         updated.name,
-        updated.test_window.start,
-        updated.test_window.end,
-        updated.test_window.enabled ? 1 : 0,
-        updated.preprod_window.start,
-        updated.preprod_window.end,
-        updated.preprod_window.enabled ? 1 : 0,
-        updated.prod_window.start,
-        updated.prod_window.end,
-        updated.prod_window.enabled ? 1 : 0,
+        JSON.stringify(updated.time_windows),
+        updated.event_enabled ? 1 : 0,
+        updated.event_open_for_delivery ? 1 : 0,
+        updated.type,
         id,
       ]
     );

@@ -9,16 +9,19 @@ export const TimeWindowSchema = z.object({
 export const EventSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
-  test_window: TimeWindowSchema,
-  preprod_window: TimeWindowSchema,
-  prod_window: TimeWindowSchema,
+  time_windows: z.record(z.enum(['test', 'preprod', 'prod']), TimeWindowSchema),
+  created_at: z.string().datetime(),
+  event_enabled: z.boolean(),
+  event_open_for_delivery: z.boolean(),
+  type: z.string(),
 });
 
 export const CreateEventSchema = z.object({
   name: z.string().min(1),
-  test_window: TimeWindowSchema,
-  preprod_window: TimeWindowSchema,
-  prod_window: TimeWindowSchema,
+  time_windows: z.record(z.enum(['test', 'preprod', 'prod']), TimeWindowSchema),
+  event_enabled: z.boolean().optional().default(true),
+  event_open_for_delivery: z.boolean().optional().default(true),
+  type: z.string().optional().default('standard'),
 });
 
 export const UpdateEventSchema = CreateEventSchema.partial();

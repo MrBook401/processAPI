@@ -12,50 +12,27 @@ export class WindowCalculationEngine {
       return isWithinInterval(releaseTime, { start, end });
     };
 
-    if (targetEnv === 'TEST') {
-      if (checkWindow(event.test_window)) {
-        return {
-          isValid: true,
-          phase: 'TEST',
-          message: `Release is within the TEST window for event ${event.id}.`,
-        }
-      } else {
-        return {
-          isValid: false,
-          phase: 'TEST',
-          message: `Release is within the TEST window for event ${event.id}, but target environment is ${targetEnv}.`,
-        };
-      }
+    if (!event.event_enabled || !event.event_open_for_delivery) {
+      return {
+        isValid: false,
+        phase: null,
+        message: `Event ${event.id} is not enabled or not open for delivery.`,
+      };
     }
 
-    if (targetEnv === 'PREPROD') {
-      if (checkWindow(event.preprod_window)) {
+    const envKey = targetEnv.toLowerCase() as 'test' | 'preprod' | 'prod';
+    if (['test', 'preprod', 'prod'].includes(envKey)) {
+      if (checkWindow(event.time_windows[envKey])) {
         return {
           isValid: true,
-          phase: 'PREPROD',
-          message: `Release is within the PREPROD window for event ${event.id}.`,
+          phase: targetEnv as 'TEST' | 'PREPROD' | 'PROD',
+          message: `Release is within the ${targetEnv} window for event ${event.id}.`,
         }
       } else {
         return {
           isValid: false,
-          phase: 'PREPROD',
-          message: `Release is within the PREPROD window for event ${event.id}, but target environment is ${targetEnv}.`,
-        };
-      }
-    }
-
-    if (targetEnv === 'PROD') {
-      if (checkWindow(event.prod_window)) {
-        return {
-          isValid: true,
-          phase: 'PROD',
-          message: `Release is within the PROD window for event ${event.id}.`,
-        }
-      } else {
-        return {
-          isValid: false,
-          phase: 'PROD',
-          message: `Release is within the PROD window for event ${event.id}, but target environment is ${targetEnv}.`,
+          phase: targetEnv as 'TEST' | 'PREPROD' | 'PROD',
+          message: `Release is within the ${targetEnv} window for event ${event.id}, but target environment is ${targetEnv}.`,
         };
       }
     }

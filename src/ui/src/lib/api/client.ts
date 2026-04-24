@@ -9,9 +9,11 @@ export interface TimeWindow {
 export interface ProcessEvent {
   id: string;
   name: string;
-  test_window: TimeWindow;
-  preprod_window: TimeWindow;
-  prod_window: TimeWindow;
+  time_windows: Record<'test' | 'preprod' | 'prod', TimeWindow>;
+  created_at: string;
+  event_enabled: boolean;
+  event_open_for_delivery: boolean;
+  type: string;
 }
 
 export async function fetchEvents(): Promise<ProcessEvent[]> {
@@ -20,7 +22,7 @@ export async function fetchEvents(): Promise<ProcessEvent[]> {
   return res.json();
 }
 
-export async function createEvent(data: Omit<ProcessEvent, 'id'>): Promise<ProcessEvent> {
+export async function createEvent(data: Omit<ProcessEvent, 'id' | 'created_at'>): Promise<ProcessEvent> {
   const res = await fetch(`${API_BASE}/events`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

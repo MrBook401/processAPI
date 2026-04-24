@@ -27,18 +27,11 @@ async function initializeSchema(db: Database) {
     CREATE TABLE IF NOT EXISTS event (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      enabled BOOLEAN NOT NULL DEFAULT 1,
-      open_for_release BOOLEAN NOT NULL DEFAULT 1,
-      test_start TEXT NULL,
-      test_end TEXT NULL,
-      test_enabled BOOLEAN NOT NULL DEFAULT 1,
-      preprod_start TEXT NULL,
-      preprod_end TEXT NULL,
-      preprod_enabled BOOLEAN NOT NULL DEFAULT 1,
-      prod_start TEXT NOT NULL,
-      prod_end TEXT NOT NULL,
-      prod_enabled BOOLEAN NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL
+      time_windows TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      event_enabled BOOLEAN NOT NULL DEFAULT 1,
+      event_open_for_delivery BOOLEAN NOT NULL DEFAULT 1,
+      type TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS release_attachment (

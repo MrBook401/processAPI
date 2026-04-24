@@ -28,9 +28,14 @@ export default function ProcessManagerDashboard() {
     mutationFn: async () => {
       await createEvent({
         name: newEvent.name,
-        test_window: { start: new Date(newEvent.testStart).toISOString(), end: new Date(newEvent.testEnd).toISOString(), enabled: newEvent.testEnabled },
-        preprod_window: { start: new Date(newEvent.preprodStart).toISOString(), end: new Date(newEvent.preprodEnd).toISOString(), enabled: newEvent.preprodEnabled },
-        prod_window: { start: new Date(newEvent.prodStart).toISOString(), end: new Date(newEvent.prodEnd).toISOString(), enabled: newEvent.prodEnabled },
+        event_enabled: true,
+        event_open_for_delivery: true,
+        type: 'standard',
+        time_windows: {
+          test: { start: new Date(newEvent.testStart).toISOString(), end: new Date(newEvent.testEnd).toISOString(), enabled: newEvent.testEnabled },
+          preprod: { start: new Date(newEvent.preprodStart).toISOString(), end: new Date(newEvent.preprodEnd).toISOString(), enabled: newEvent.preprodEnabled },
+          prod: { start: new Date(newEvent.prodStart).toISOString(), end: new Date(newEvent.prodEnd).toISOString(), enabled: newEvent.prodEnabled },
+        }
       });
     },
     onSuccess: () => {
@@ -198,13 +203,13 @@ export default function ProcessManagerDashboard() {
                 <TableRow key={evt.id}>
                   <TableCell className="font-medium">{evt.name}</TableCell>
                   <TableCell className="text-xs text-blue-600">
-                    {evt.test_window.enabled ? `${format(new Date(evt.test_window.start), 'MMM dd')} - ${format(new Date(evt.test_window.end), 'MMM dd')}` : 'Disabled'}
+                    {evt.time_windows.test.enabled ? `${format(new Date(evt.time_windows.test.start), 'MMM dd')} - ${format(new Date(evt.time_windows.test.end), 'MMM dd')}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-purple-600">
-                    {evt.preprod_window.enabled ? `${format(new Date(evt.preprod_window.start), 'MMM dd')} - ${format(new Date(evt.preprod_window.end), 'MMM dd')}` : 'Disabled'}
+                    {evt.time_windows.preprod.enabled ? `${format(new Date(evt.time_windows.preprod.start), 'MMM dd')} - ${format(new Date(evt.time_windows.preprod.end), 'MMM dd')}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-green-600">
-                    {evt.prod_window.enabled ? `${format(new Date(evt.prod_window.start), 'MMM dd')} - ${format(new Date(evt.prod_window.end), 'MMM dd')}` : 'Disabled'}
+                    {evt.time_windows.prod.enabled ? `${format(new Date(evt.time_windows.prod.start), 'MMM dd')} - ${format(new Date(evt.time_windows.prod.end), 'MMM dd')}` : 'Disabled'}
                   </TableCell>
                   <TableCell className="text-xs text-gray-400">{evt.id}</TableCell>
                 </TableRow>
