@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const TimeWindowSchema = z.object({
-  start: z.string().datetime().nullable(),
-  end: z.string().datetime().nullable(),
+  start: z.string().datetime().default('undefined'),
+  end: z.string().datetime().default('undefined'),
   enabled: z.boolean().default(true),
 });
 

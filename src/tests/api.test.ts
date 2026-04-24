@@ -19,10 +19,26 @@ describe('API Tests', () => {
       .post('/events')
       .send({
         name: 'Quarterly Update Q2',
-        test_window: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z' },
-        preprod_window: { start: '2026-05-08T00:00:00Z', end: '2026-05-14T23:59:59Z' },
-        prod_window: { start: '2026-05-15T00:00:00Z', end: '2026-05-20T23:59:59Z' },
+        test_window: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z' , enabled: true},
+        preprod_window: { start: '2026-05-08T00:00:00Z', end: '2026-05-14T23:59:59Z', enabled: true },
+        prod_window: { start: '2026-05-15T00:00:00Z', end: '2026-05-20T23:59:59Z', enabled: true },
       });
+    if (res.statusCode !== 201) console.error(res.body);
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty('id');
+    eventId = res.body.id;
+  });
+
+  it('POST /events should create an event with test_window and preprod_window enabled but default dates', async () => {
+    const res = await request(app)
+      .post('/events')
+      .send({
+        name: 'Quarterly Update Q3',
+        test_window: {start: undefined, end: undefined, enabled: true},
+        preprod_window: { start: '2026-05-08T00:00:00Z', end: '2026-05-14T23:59:59Z', enabled: true },
+        prod_window: { start: '2026-05-15T00:00:00Z', end: '2026-05-20T23:59:59Z', enabled: true },
+      });
+    if (res.statusCode !== 201) console.error(res.body);
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('id');
     eventId = res.body.id;

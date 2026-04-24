@@ -89,3 +89,8 @@ Additional endpoints to implement:
 - Build Application Management view:
   - Application List Table
   - Create Application Modal/Form with environment-to-jurisdictions selectors.
+
+### Swagger & documentation update 
+
+- udpate the swagger with the API specs 
+- update the readme and curl examples.

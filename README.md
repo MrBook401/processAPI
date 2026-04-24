@@ -42,7 +42,7 @@ curl -X POST http://localhost:3001/events \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Quarterly Update Q2",
-    "test_window": { "start": "2026-05-01T00:00:00Z", "end": "2026-05-07T23:59:59Z" },
+    "test_window": { "start": "2026-05-01T00:00:00Z", "end": "2026-05-07T23:59:59Z", "enabled":true},
     "preprod_window": { "start": "2026-05-08T00:00:00Z", "end": "2026-05-14T23:59:59Z" },
     "prod_window": { "start": "2026-05-15T00:00:00Z", "end": "2026-05-20T23:59:59Z" }
   }'

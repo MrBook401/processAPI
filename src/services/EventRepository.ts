@@ -12,12 +12,27 @@ function mapRowToEvent(row: any): Event {
   };
 }
 
+function replaceUndefinedWithNull(obj: any): any {
+  if (obj && typeof obj === 'object') {
+    for (const key in obj) {
+      if (obj[key] === undefined) {
+        obj[key] = null;
+      } else if (typeof obj[key] === 'object') {
+        replaceUndefinedWithNull(obj[key]);
+      }
+    }
+  }
+  return obj;
+}
+
 export class EventRepository {
   async create(data: CreateEvent): Promise<Event> {
     const db = await getDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    
 
+    
     await db.run(
       `INSERT INTO event (
         id, name, test_start, test_end, test_enabled, preprod_start, preprod_end, preprod_enabled, prod_start, prod_end, prod_enabled, created_at
@@ -25,14 +40,14 @@ export class EventRepository {
       [
         id,
         data.name,
-        data.test_window.start || '0000-00-00T00:00:00Z',
-        data.test_window.end || '0000-00-00T00:00:00Z',
+        data.test_window.start ?? now,
+        data.test_window.end ?? data.prod_window.start,
         data.test_window.enabled ? 1 : 0,
-        data.preprod_window.start || '0000-00-00T00:00:00Z' ,
-        data.preprod_window.end || '0000-00-00T00:00:00Z',
+        data.preprod_window.start ?? now,
+        data.preprod_window.end ?? data.prod_window.start,
         data.preprod_window.enabled ? 1 : 0,
-        data.prod_window.start || '0000-00-00T00:00:00Z',
-        data.prod_window.end || '0000-00-00T00:00:00Z',
+        data.prod_window.start,
+        data.prod_window.end,
         data.prod_window.enabled ? 1 : 0,
         now,
       ]
