@@ -1,2 +1,8 @@
 node_modules
 database.sqlite
+coverage/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+databases/
