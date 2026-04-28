@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "../components/Providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Self-hosted fonts (no Google Fonts dependency)
+import "@fontsource/inter";      // Inter sans-serif font
+import "@fontsource/fira-mono";  // Fira Code monospace font
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -26,9 +19,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
+      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", fontFeatureSettings: "cv11" }}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sans">
         <Providers>
           {children}
         </Providers>
