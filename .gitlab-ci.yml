@@ -1,3 +1,68 @@
+
+ # One of the new trends in Continuous Integration/Deployment is to:
+# (see https://docs.gitlab.com/ee/ci/docker/using_docker_build.html)
+#
+# 1. Create an application image
+# 2. Run tests against the created image
+# 3. Push image to a remote registry
+# 4. Deploy to a server from the pushed image
+workflow:
+  rules:
+    # Skip pipelines created for merge request events to avoid double execution
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+
+stages:
+  - initialize
+  - test
+  - docs
+  - build
+  - push
+  - deploy
+#  - deploy
+# see usage of Namespaces at https://docs.gitlab.com/ee/user/group/#namespaces
+variables:
+  CI_REGISTRY: "docker.k8s.care4me.io"
+  APP_NAME: "smartfridgeai"
+  MIDTIER_NAME: "smartfridgeai-api"
+  API_NAME: "smartfridgeai-user-api"
+  APP_VERSION: "0.0.1"
+  GEMINI_CLI_TRUST_WORKSPACE: true
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - node_modules/
+    - .npm
+
+tests:
+  image: node:latest
+  stage: test
+  variables:
+    NODE_ENV: test
+  before_script:
+    - npm ci
+  script:
+    - npm run test 
+    - cd src/ui && npm ci && npm run test
+  artifacts:
+    paths:
+      - coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/lcov.info
+      junit: coverage/junit.xml
+    when: always
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+
+
+
 stages:
   - test
 
