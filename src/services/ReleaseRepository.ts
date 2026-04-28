@@ -1,26 +1,25 @@
-import { getDb } from '../db/sqlite';
+import { getDb, closeDb } from '../db/sqlite';
+import type Database from 'better-sqlite3';
 import { AttachRelease, ReleaseAttachment } from '../types';
 import crypto from 'crypto';
 
 export class ReleaseRepository {
-  async attach(data: AttachRelease): Promise<ReleaseAttachment> {
-    const db = await getDb();
+  attach(data: AttachRelease): ReleaseAttachment {
+    const db = getDb();
     const id = crypto.randomUUID();
     const attachedAt = new Date().toISOString();
 
-    await db.run(
+    db.prepare(
       `INSERT INTO release_attachment (id, release_id, event_id, attached_at)
        VALUES (?, ?, ?, ?)
        ON CONFLICT(release_id) DO UPDATE SET
        event_id = excluded.event_id,
-       attached_at = excluded.attached_at`,
-      [id, data.releaseId, data.eventId, attachedAt]
-    );
+       attached_at = excluded.attached_at`
+    ).run(id, data.releaseId, data.eventId, attachedAt);
 
-    const row = await db.get(
-      `SELECT * FROM release_attachment WHERE release_id = ?`,
-      [data.releaseId]
-    );
+    const row = db.prepare(
+      `SELECT * FROM release_attachment WHERE release_id = ?`
+    ).get(data.releaseId) as any;
 
     return {
       id: row.id,
@@ -30,23 +29,21 @@ export class ReleaseRepository {
     };
   }
 
-  async detach(releaseId: string): Promise<boolean> {
-    const db = await getDb();
-    const result = await db.run(
-      `DELETE FROM release_attachment WHERE release_id = ?`,
-      [releaseId]
-    );
+  detach(releaseId: string): boolean {
+    const db = getDb();
+    const result = db.prepare(
+      `DELETE FROM release_attachment WHERE release_id = ?`
+    ).run(releaseId);
     return (result.changes ?? 0) > 0;
   }
 
-  async findByReleaseId(releaseId: string): Promise<ReleaseAttachment | null> {
-    const db = await getDb();
-    const row = await db.get(
-      `SELECT * FROM release_attachment WHERE release_id = ?`,
-      [releaseId]
-    );
+  findByReleaseId(releaseId: string): ReleaseAttachment | undefined {
+    const db = getDb();
+    const row = db.prepare(
+      `SELECT * FROM release_attachment WHERE release_id = ?`
+    ).get(releaseId) as any;
 
-    if (!row) return null;
+    if (!row) return undefined;
 
     return {
       id: row.id,
@@ -56,14 +53,13 @@ export class ReleaseRepository {
     };
   }
 
-  async findByEventId(eventId: string): Promise<ReleaseAttachment[]> {
-    const db = await getDb();
-    const rows = await db.all(
-      `SELECT * FROM release_attachment WHERE event_id = ?`,
-      [eventId]
-    );
+  findByEventId(eventId: string): ReleaseAttachment[] {
+    const db = getDb();
+    const rows = db.prepare(
+      `SELECT * FROM release_attachment WHERE event_id = ?`
+    ).all(eventId);
 
-    return rows.map(row => ({
+    return (rows as any[]).map(row => ({
       id: row.id,
       releaseId: row.release_id,
       eventId: row.event_id,

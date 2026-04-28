@@ -35,13 +35,13 @@ const windowEngine = new WindowCalculationEngine_1.WindowCalculationEngine();
  *       500:
  *         description: Server error
  */
-exports.routes.post('/events', async (req, res) => {
+exports.routes.post('/events', (req, res) => {
     const parseResult = types_1.CreateEventSchema.safeParse(req.body);
     if (!parseResult.success) {
         return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
     }
     try {
-        const event = await eventRepo.create(parseResult.data);
+        const event = eventRepo.create(parseResult.data);
         res.status(201).json(event);
     }
     catch (err) {
@@ -65,9 +65,9 @@ exports.routes.post('/events', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.get('/events', async (req, res) => {
+exports.routes.get('/events', (req, res) => {
     try {
-        const events = await eventRepo.findAll();
+        const events = eventRepo.findAll();
         res.status(200).json(events);
     }
     catch (err) {
@@ -107,13 +107,13 @@ exports.routes.get('/events', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.patch('/events/:id', async (req, res) => {
+exports.routes.patch('/events/:id', (req, res) => {
     const parseResult = types_1.UpdateEventSchema.safeParse(req.body);
     if (!parseResult.success) {
         return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
     }
     try {
-        const event = await eventRepo.update(req.params.id, parseResult.data);
+        const event = eventRepo.update(req.params.id, parseResult.data);
         if (!event)
             return res.status(404).json({ error: 'Event not found' });
         res.status(200).json(event);
@@ -149,13 +149,13 @@ exports.routes.patch('/events/:id', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.get('/events/:id/releases', async (req, res) => {
+exports.routes.get('/events/:id/releases', (req, res) => {
     try {
-        const event = await eventRepo.findById(req.params.id);
+        const event = eventRepo.findById(req.params.id);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
-        const releases = await releaseRepo.findByEventId(req.params.id);
+        const releases = releaseRepo.findByEventId(req.params.id);
         res.status(200).json(releases);
     }
     catch (err) {
@@ -187,22 +187,22 @@ exports.routes.get('/events/:id/releases', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.post('/release/attach', async (req, res) => {
+exports.routes.post('/release/attach', (req, res) => {
     const parseResult = types_1.AttachReleaseSchema.safeParse(req.body);
     if (!parseResult.success) {
         return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
     }
     try {
-        const existingAttachment = await releaseRepo.findByReleaseId(parseResult.data.releaseId);
+        const existingAttachment = releaseRepo.findByReleaseId(parseResult.data.releaseId);
         if (existingAttachment) {
             return res.status(400).json({ error: 'Release already attached to an event' });
         }
         // Make sure event exists
-        const event = await eventRepo.findById(parseResult.data.eventId);
+        const event = eventRepo.findById(parseResult.data.eventId);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
-        const attachment = await releaseRepo.attach(parseResult.data);
+        const attachment = releaseRepo.attach(parseResult.data);
         res.status(201).json(attachment);
     }
     catch (err) {
@@ -229,13 +229,13 @@ exports.routes.post('/release/attach', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.delete('/release/attach/:releaseId', async (req, res) => {
+exports.routes.delete('/release/attach/:releaseId', (req, res) => {
     const { releaseId } = req.params;
     if (!releaseId) {
         return res.status(400).json({ error: 'Missing releaseId' });
     }
     try {
-        const detached = await releaseRepo.detach(releaseId);
+        const detached = releaseRepo.detach(releaseId);
         if (!detached) {
             return res.status(404).json({ error: 'Release attachment not found' });
         }
@@ -270,21 +270,21 @@ exports.routes.delete('/release/attach/:releaseId', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.patch('/release/attach', async (req, res) => {
+exports.routes.patch('/release/attach', (req, res) => {
     const parseResult = types_1.AttachReleaseSchema.safeParse(req.body);
     if (!parseResult.success) {
         return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
     }
     try {
-        const event = await eventRepo.findById(parseResult.data.eventId);
+        const event = eventRepo.findById(parseResult.data.eventId);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
-        const existing = await releaseRepo.findByReleaseId(parseResult.data.releaseId);
+        const existing = releaseRepo.findByReleaseId(parseResult.data.releaseId);
         if (!existing) {
             return res.status(404).json({ error: 'Release attachment not found' });
         }
-        const attachment = await releaseRepo.attach(parseResult.data);
+        const attachment = releaseRepo.attach(parseResult.data);
         res.status(200).json(attachment);
     }
     catch (err) {
@@ -327,19 +327,19 @@ exports.routes.patch('/release/attach', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.get('/release/validate/id', async (req, res) => {
+exports.routes.get('/release/validate/id', (req, res) => {
     const { releaseId, eventId, releaseTimestamp, targetEnv } = req.query;
     if (typeof releaseId !== 'string' || typeof eventId !== 'string' || typeof targetEnv !== 'string') {
         return res.status(400).json({ error: 'Missing releaseId, eventId, or targetEnv' });
     }
-    // Expect releaseTimestamp to be passed, fallback to now if not. 
+    // Expect releaseTimestamp to be passed, fallback to now if not.
     const timestamp = typeof releaseTimestamp === 'string' ? releaseTimestamp : new Date().toISOString();
     try {
-        const event = await eventRepo.findById(eventId);
+        const event = eventRepo.findById(eventId);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
-        const attachment = await releaseRepo.findByReleaseId(releaseId);
+        const attachment = releaseRepo.findByReleaseId(releaseId);
         if (!attachment || attachment.eventId !== eventId) {
             return res.status(400).json({ error: 'Release is not attached to this event' });
         }
@@ -373,13 +373,13 @@ exports.routes.get('/release/validate/id', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.post('/applications', async (req, res) => {
+exports.routes.post('/applications', (req, res) => {
     const parseResult = types_1.CreateApplicationSchema.safeParse(req.body);
     if (!parseResult.success) {
         return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.issues });
     }
     try {
-        const application = await applicationRepo.createApplication(parseResult.data);
+        const application = applicationRepo.createApplication(parseResult.data);
         res.status(201).json(application);
     }
     catch (err) {
@@ -403,9 +403,9 @@ exports.routes.post('/applications', async (req, res) => {
  *       500:
  *         description: Server error
  */
-exports.routes.get('/applications', async (req, res) => {
+exports.routes.get('/applications', (req, res) => {
     try {
-        const applications = await applicationRepo.getAllApplications();
+        const applications = applicationRepo.getAllApplications();
         res.status(200).json(applications);
     }
     catch (err) {

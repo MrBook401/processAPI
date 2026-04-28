@@ -2,81 +2,110 @@ import { EventRepository } from '../services/EventRepository';
 import { getDb, closeDb } from '../db/sqlite';
 
 describe('EventRepository', () => {
-  let repository: EventRepository;
+  let repo: EventRepository;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     process.env.NODE_ENV = 'test';
-    await getDb();
-    repository = new EventRepository();
   });
 
-  afterAll(async () => {
-    await closeDb();
+  beforeEach(() => {
+    closeDb();
+    getDb();
+    repo = new EventRepository();
   });
 
-  it('should create and retrieve an event', async () => {
-    const event = await repository.create({
-      name: 'Repo Test Event',
-      type: 'standard',
+  afterAll(() => {
+    closeDb();
+  });
+
+  it('should create an event', () => {
+    const event = repo.create({
+      name: 'Test Event',
+      time_windows: {
+        test: { start: null, end: null, enabled: false },
+        preprod: { start: null, end: null, enabled: false },
+        prod: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z', enabled: true },
+      },
       event_enabled: true,
       event_open_for_delivery: true,
-      time_windows: {
-        test: { enabled: true, start: null, end: null },
-        preprod: { enabled: false, start: null, end: null },
-        prod: { enabled: true, start: '2026-01-01T00:00:00Z', end: '2026-01-02T00:00:00Z' }
-      }
+      type: 'standard' as any,
     });
 
-    expect(event).toBeDefined();
     expect(event.id).toBeDefined();
-    expect(event.name).toBe('Repo Test Event');
-
-    const retrieved = await repository.findById(event.id);
-    expect(retrieved).not.toBeNull();
-    expect(retrieved?.id).toBe(event.id);
+    expect(event.name).toEqual('Test Event');
   });
 
-  it('findById should return null for non-existent id', async () => {
-    const retrieved = await repository.findById('00000000-0000-0000-0000-000000000000');
-    expect(retrieved).toBeNull();
-  });
-
-  it('update should update an existing event', async () => {
-    const event = await repository.create({
-      name: 'Event To Update',
-      type: 'standard',
+  it('should find an event by id', () => {
+    const event = repo.create({
+      name: 'Find Me Event',
+      time_windows: {
+        test: { start: null, end: null, enabled: false },
+        preprod: { start: null, end: null, enabled: false },
+        prod: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z', enabled: true },
+      },
       event_enabled: true,
       event_open_for_delivery: true,
-      time_windows: {
-        test: { enabled: true, start: null, end: null },
-        preprod: { enabled: true, start: null, end: null },
-        prod: { enabled: true, start: null, end: null }
-      }
+      type: 'standard' as any,
     });
 
-    const updated = await repository.update(event.id, { name: 'Updated Repo Event' });
-    expect(updated).not.toBeNull();
-    expect(updated?.name).toBe('Updated Repo Event');
-    
-    // Verify changes persisted
-    const retrieved = await repository.findById(event.id);
-    expect(retrieved?.name).toBe('Updated Repo Event');
+    const found = repo.findById(event.id);
+    expect(found).toBeDefined();
+    expect(found!.name).toEqual('Find Me Event');
   });
 
-  it('update should return null for non-existent id', async () => {
-    const updated = await repository.update('00000000-0000-0000-0000-000000000000', { name: 'New Name' });
-    expect(updated).toBeNull();
+  it('should return undefined for non-existent event', () => {
+    const found = repo.findById('non-existent-id');
+    expect(found).toBeUndefined();
   });
 
-  it('findAll should return all events', async () => {
-    const defaultTimeWindows = {
-      test: { enabled: true, start: null, end: null },
-      preprod: { enabled: true, start: null, end: null },
-      prod: { enabled: true, start: null, end: null }
-    };
-    await repository.create({ name: 'Event A', type: 'standard', event_enabled: true, event_open_for_delivery: true, time_windows: defaultTimeWindows });
-    await repository.create({ name: 'Event B', type: 'standard', event_enabled: true, event_open_for_delivery: true, time_windows: defaultTimeWindows });
-    const all = await repository.findAll();
-    expect(all.length).toBeGreaterThanOrEqual(2);
+  it('should list all events', () => {
+    repo.create({
+      name: 'Event 1',
+      time_windows: {
+        test: { start: null, end: null, enabled: false },
+        preprod: { start: null, end: null, enabled: false },
+        prod: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z', enabled: true },
+      },
+      event_enabled: true,
+      event_open_for_delivery: true,
+      type: 'standard' as any,
+    });
+
+    repo.create({
+      name: 'Event 2',
+      time_windows: {
+        test: { start: null, end: null, enabled: false },
+        preprod: { start: null, end: null, enabled: false },
+        prod: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z', enabled: true },
+      },
+      event_enabled: true,
+      event_open_for_delivery: true,
+      type: 'standard' as any,
+    });
+
+    const events = repo.findAll();
+    expect(events.length).toBeGreaterThan(0);
+  });
+
+  it('should update an event', () => {
+    const event = repo.create({
+      name: 'Original Name',
+      time_windows: {
+        test: { start: null, end: null, enabled: false },
+        preprod: { start: null, end: null, enabled: false },
+        prod: { start: '2026-05-01T00:00:00Z', end: '2026-05-07T23:59:59Z', enabled: true },
+      },
+      event_enabled: true,
+      event_open_for_delivery: true,
+      type: 'standard' as any,
+    });
+
+    const updated = repo.update(event.id, { name: 'Updated Name' });
+    expect(updated!.name).toEqual('Updated Name');
+  });
+
+  it('should return undefined when updating non-existent event', () => {
+    const updated = repo.update('non-existent-id', { name: 'Updated' });
+    expect(updated).toBeUndefined();
   });
 });

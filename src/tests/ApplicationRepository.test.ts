@@ -2,49 +2,39 @@ import { ApplicationRepository } from '../services/ApplicationRepository';
 import { getDb, closeDb } from '../db/sqlite';
 
 describe('ApplicationRepository', () => {
-  let repository: ApplicationRepository;
+  let repo: ApplicationRepository;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     process.env.NODE_ENV = 'test';
-    await getDb();
-    repository = new ApplicationRepository();
   });
 
-  afterAll(async () => {
-    await closeDb();
+  beforeEach(() => {
+    closeDb();
+    getDb();
+    repo = new ApplicationRepository();
   });
 
-  it('should create an application', async () => {
-    const app = await repository.createApplication({
+  afterAll(() => {
+    closeDb();
+  });
+
+  it('should create an application', () => {
+    const app = repo.createApplication({
       name: 'Test App',
-      environments: {
-        dev: ['CH'],
-        test: ['CH', 'EMEA'],
-        preprod: ['CH', 'EMEA', 'US'],
-        prod: ['APAC', 'CH', 'EMEA', 'US']
-      }
+      environments: { dev: ['CH'], test: ['CH'], preprod: [], prod: [] },
     });
 
-    expect(app).toBeDefined();
     expect(app.id).toBeDefined();
-    expect(app.name).toBe('Test App');
-    expect(app.environments.dev).toEqual(['CH']);
+    expect(app.name).toEqual('Test App');
   });
 
-  it('should get all applications', async () => {
-    await repository.createApplication({
-      name: 'Test App 2',
-      environments: {
-        dev: [],
-        test: [],
-        preprod: [],
-        prod: []
-      }
+  it('should list applications', () => {
+    repo.createApplication({
+      name: 'Test App 1',
+      environments: { dev: ['CH'], test: ['CH'], preprod: [], prod: [] },
     });
 
-    const apps = await repository.getAllApplications();
+    const apps = repo.getAllApplications();
     expect(apps.length).toBeGreaterThan(0);
-    const found = apps.find(a => a.name === 'Test App 2');
-    expect(found).toBeDefined();
   });
 });

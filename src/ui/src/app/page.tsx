@@ -24,6 +24,11 @@ export default function ProcessManagerDashboard() {
     prodStart: '', prodEnd: '', prodEnabled: true
   });
 
+  // Helper function to parse date strings - returns null for empty strings
+  const parseDate = (dateStr: string): string | null => {
+    return dateStr ? new Date(dateStr).toISOString() : null;
+  };
+
   const createEventMutation = useMutation({
     mutationFn: async () => {
       await createEvent({
@@ -32,15 +37,31 @@ export default function ProcessManagerDashboard() {
         event_open_for_delivery: true,
         type: 'standard',
         time_windows: {
-          test: { start: new Date(newEvent.testStart).toISOString(), end: new Date(newEvent.testEnd).toISOString(), enabled: newEvent.testEnabled },
-          preprod: { start: new Date(newEvent.preprodStart).toISOString(), end: new Date(newEvent.preprodEnd).toISOString(), enabled: newEvent.preprodEnabled },
-          prod: { start: new Date(newEvent.prodStart).toISOString(), end: new Date(newEvent.prodEnd).toISOString(), enabled: newEvent.prodEnabled },
+          test: { start: parseDate(newEvent.testStart), end: parseDate(newEvent.testEnd), enabled: newEvent.testEnabled },
+          preprod: { start: parseDate(newEvent.preprodStart), end: parseDate(newEvent.preprodEnd), enabled: newEvent.preprodEnabled },
+          prod: { start: parseDate(newEvent.prodStart), end: parseDate(newEvent.prodEnd), enabled: newEvent.prodEnabled },
         }
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       setIsEventModalOpen(false);
+      // Reset form
+      setNewEvent({
+        name: '',
+        testStart: '', testEnd: '', testEnabled: true,
+        preprodStart: '', preprodEnd: '', preprodEnabled: true,
+        prodStart: '', prodEnd: '', prodEnabled: true
+      });
+    },
+    onError: (error: any) => {
+      // Show validation errors to user
+      if (error.response?.data?.details) {
+        const messages = error.response.data.details.map((d: any) => d.message).join('\n');
+        alert(`Validation failed:\n${messages}`);
+      } else {
+        alert('Failed to create event. Please try again.');
+      }
     }
   });
 

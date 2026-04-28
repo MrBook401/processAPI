@@ -1,4 +1,5 @@
-import { getDb } from '../db/sqlite';
+import { getDb, closeDb } from '../db/sqlite';
+import type Database from 'better-sqlite3';
 import { Event, CreateEvent, UpdateEvent } from '../types';
 import crypto from 'crypto';
 
@@ -15,47 +16,45 @@ function mapRowToEvent(row: any): Event {
 }
 
 export class EventRepository {
-  async create(data: CreateEvent): Promise<Event> {
-    const db = await getDb();
+  create(data: CreateEvent): Event {
+    const db = getDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    
-    await db.run(
-      `INSERT INTO event (
-        id, name, time_windows, created_at, event_enabled, event_open_for_delivery, type
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        data.name,
-        JSON.stringify(data.time_windows),
-        now,
-        data.event_enabled ? 1 : 0,
-        data.event_open_for_delivery ? 1 : 0,
-        data.type,
-      ]
+
+    db.prepare(
+      `INSERT INTO event (id, name, time_windows, created_at, event_enabled, event_open_for_delivery, type)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      id,
+      data.name,
+      JSON.stringify(data.time_windows),
+      now,
+      data.event_enabled ? 1 : 0,
+      data.event_open_for_delivery ? 1 : 0,
+      data.type,
     );
 
-    return this.findById(id) as Promise<Event>;
+    return this.findById(id)!;
   }
 
-  async findAll(): Promise<Event[]> {
-    const db = await getDb();
-    const rows = await db.all(`SELECT * FROM event ORDER BY created_at DESC`);
-    return rows.map(mapRowToEvent);
+  findAll(): Event[] {
+    const db = getDb();
+    const rows = db.prepare(`SELECT * FROM event ORDER BY created_at DESC`).all();
+    return (rows as any[]).map(mapRowToEvent);
   }
 
-  async findById(id: string): Promise<Event | null> {
-    const db = await getDb();
-    const row = await db.get(`SELECT * FROM event WHERE id = ?`, [id]);
-    if (!row) return null;
-    return mapRowToEvent(row);
+  findById(id: string): Event | undefined {
+    const db = getDb();
+    const row = db.prepare(`SELECT * FROM event WHERE id = ?`).get(id);
+    if (!row) return undefined;
+    return mapRowToEvent(row as any);
   }
 
-  async update(id: string, data: UpdateEvent): Promise<Event | null> {
-    const db = await getDb();
-    
-    const existing = await this.findById(id);
-    if (!existing) return null;
+  update(id: string, data: UpdateEvent): Event | undefined {
+    const db = getDb();
+
+    const existing = this.findById(id);
+    if (!existing) return undefined;
 
     const updated = {
       name: data.name ?? existing.name,
@@ -65,22 +64,16 @@ export class EventRepository {
       type: data.type ?? existing.type,
     };
 
-    await db.run(
-      `UPDATE event SET
-        name = ?,
-        time_windows = ?,
-        event_enabled = ?,
-        event_open_for_delivery = ?,
-        type = ?
-      WHERE id = ?`,
-      [
-        updated.name,
-        JSON.stringify(updated.time_windows),
-        updated.event_enabled ? 1 : 0,
-        updated.event_open_for_delivery ? 1 : 0,
-        updated.type,
-        id,
-      ]
+    db.prepare(
+      `UPDATE event SET name = ?, time_windows = ?, event_enabled = ?, event_open_for_delivery = ?, type = ?
+       WHERE id = ?`
+    ).run(
+      updated.name,
+      JSON.stringify(updated.time_windows),
+      updated.event_enabled ? 1 : 0,
+      updated.event_open_for_delivery ? 1 : 0,
+      updated.type,
+      id,
     );
 
     return this.findById(id);

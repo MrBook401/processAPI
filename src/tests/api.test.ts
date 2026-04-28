@@ -3,13 +3,13 @@ import { app } from '../api/app';
 import { getDb, closeDb } from '../db/sqlite';
 
 describe('API Tests', () => {
-  beforeAll(async () => {
+  beforeAll(() => {
     process.env.NODE_ENV = 'test';
-    await getDb();
+    getDb();
   });
 
-  afterAll(async () => {
-    await closeDb();
+  afterAll(() => {
+    closeDb();
   });
 
   let eventId: string;
@@ -72,7 +72,7 @@ describe('API Tests', () => {
     const res = await request(app).get('/events');
     expect(res.statusCode).toEqual(500);
     expect(res.body).toHaveProperty('error');
-    
+
     mockFindAll.mockRestore();
   });
 

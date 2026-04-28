@@ -4,12 +4,19 @@ exports.WindowCalculationEngine = void 0;
 const date_fns_1 = require("date-fns");
 class WindowCalculationEngine {
     validateTiming(event, releaseTimestampStr, targetEnv) {
-        const releaseTime = (0, date_fns_1.parseISO)(releaseTimestampStr);
         if (!event || !releaseTimestampStr || !targetEnv) {
             return {
                 isValid: false,
                 phase: null,
                 message: `Missing required information: event, release timestamp, or target environment.`,
+            };
+        }
+        const releaseTime = (0, date_fns_1.parseISO)(releaseTimestampStr);
+        if (isNaN(releaseTime.getTime())) {
+            return {
+                isValid: false,
+                phase: null,
+                message: `Invalid release timestamp provided.`,
             };
         }
         const checkWindow = (window) => {
