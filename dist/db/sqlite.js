@@ -5,25 +5,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDb = getDb;
 exports.closeDb = closeDb;
-const sqlite3_1 = __importDefault(require("sqlite3"));
-const sqlite_1 = require("sqlite");
+const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path_1 = __importDefault(require("path"));
 let dbInstance = null;
-async function getDb() {
+function getDb() {
     if (dbInstance)
         return dbInstance;
     const dbPath = process.env.NODE_ENV === 'test'
         ? ':memory:'
         : path_1.default.join(__dirname, '../../database.sqlite');
-    dbInstance = await (0, sqlite_1.open)({
-        filename: dbPath,
-        driver: sqlite3_1.default.Database
-    });
-    await initializeSchema(dbInstance);
-    return dbInstance;
+    const db = new better_sqlite3_1.default(dbPath);
+    db.pragma('journal_mode = WAL');
+    initializeSchema(db);
+    dbInstance = db;
+    return db;
 }
-async function initializeSchema(db) {
-    await db.exec(`
+function initializeSchema(db) {
+    db.exec(`
     CREATE TABLE IF NOT EXISTS event (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -39,10 +37,9 @@ async function initializeSchema(db) {
       release_id TEXT NOT NULL UNIQUE,
       application_id TEXT NULL,
       event_id TEXT NOT NULL,
-      attached_at TEXT NOT NULL,
-      FOREIGN KEY (event_id) REFERENCES event (id)
+      attached_at TEXT NOT NULL
     );
-    
+
     CREATE INDEX IF NOT EXISTS idx_release_id ON release_attachment(release_id);
 
     CREATE TABLE IF NOT EXISTS application (
@@ -53,9 +50,9 @@ async function initializeSchema(db) {
     );
   `);
 }
-async function closeDb() {
+function closeDb() {
     if (dbInstance) {
-        await dbInstance.close();
+        dbInstance.close();
         dbInstance = null;
     }
 }

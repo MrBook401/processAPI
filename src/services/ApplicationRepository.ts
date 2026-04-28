@@ -1,37 +1,37 @@
 import { randomUUID } from 'crypto';
-import { getDb } from '../db/sqlite';
+import { getDb, closeDb } from '../db/sqlite';
+import type Database from 'better-sqlite3';
 import { Application, CreateApplication } from '../types';
 
 export class ApplicationRepository {
-  async createApplication(data: CreateApplication): Promise<Application> {
-    const db = await getDb();
+  createApplication(data: CreateApplication): Application {
+    const db = getDb();
     const id = randomUUID();
     const created_at = new Date().toISOString();
     const environmentsJson = JSON.stringify(data.environments);
 
-    await db.run(
+    db.prepare(
       `INSERT INTO application (id, name, environments, created_at)
-       VALUES (?, ?, ?, ?)`,
-      [id, data.name, environmentsJson, created_at]
-    );
+       VALUES (?, ?, ?, ?)`
+    ).run(id, data.name, environmentsJson, created_at);
 
     return {
       id,
       name: data.name,
       environments: data.environments,
-      created_at
+      created_at,
     };
   }
 
-  async getAllApplications(): Promise<Application[]> {
-    const db = await getDb();
-    const rows = await db.all(`SELECT * FROM application`);
+  getAllApplications(): Application[] {
+    const db = getDb();
+    const rows = db.prepare(`SELECT * FROM application`).all();
 
-    return rows.map((row) => ({
+    return (rows as any[]).map((row) => ({
       id: row.id,
       name: row.name,
       environments: JSON.parse(row.environments),
-      created_at: row.created_at
+      created_at: row.created_at,
     }));
   }
 }

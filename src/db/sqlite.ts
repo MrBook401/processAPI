@@ -1,29 +1,25 @@
-import sqlite3 from 'sqlite3';
-import { open, Database } from 'sqlite';
+import Database from 'better-sqlite3';
 import path from 'path';
-import fs from 'fs';
 
-let dbInstance: Database | null = null;
+let dbInstance: any | null = null;
 
-export async function getDb(): Promise<Database> {
+export function getDb(): any {
   if (dbInstance) return dbInstance;
 
-  const dbPath = process.env.NODE_ENV === 'test' 
-    ? ':memory:' 
+  const dbPath = process.env.NODE_ENV === 'test'
+    ? ':memory:'
     : path.join(__dirname, '../../database.sqlite');
-    
-  dbInstance = await open({
-    filename: dbPath,
-    driver: sqlite3.Database
-  });
 
-  await initializeSchema(dbInstance);
+  const db = new Database(dbPath);
+  db.pragma('journal_mode = WAL');
 
-  return dbInstance;
+  initializeSchema(db);
+  dbInstance = db;
+  return db;
 }
 
-async function initializeSchema(db: Database) {
-  await db.exec(`
+function initializeSchema(db: any) {
+  db.exec(`
     CREATE TABLE IF NOT EXISTS event (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -39,10 +35,9 @@ async function initializeSchema(db: Database) {
       release_id TEXT NOT NULL UNIQUE,
       application_id TEXT NULL,
       event_id TEXT NOT NULL,
-      attached_at TEXT NOT NULL,
-      FOREIGN KEY (event_id) REFERENCES event (id)
+      attached_at TEXT NOT NULL
     );
-    
+
     CREATE INDEX IF NOT EXISTS idx_release_id ON release_attachment(release_id);
 
     CREATE TABLE IF NOT EXISTS application (
@@ -54,9 +49,9 @@ async function initializeSchema(db: Database) {
   `);
 }
 
-export async function closeDb() {
+export function closeDb() {
   if (dbInstance) {
-    await dbInstance.close();
+    dbInstance.close();
     dbInstance = null;
   }
 }
