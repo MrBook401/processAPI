@@ -44,7 +44,7 @@ tests:
   variables:
     NODE_ENV: test
   before_script:
-    - npm ci
+    - npm i
   script:
     - npm run test 
     - cd src/ui && npm ci && npm run test
