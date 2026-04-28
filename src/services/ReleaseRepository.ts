@@ -66,4 +66,39 @@ export class ReleaseRepository {
       attachedAt: row.attached_at,
     }));
   }
+
+  // Returns ALL rows from release_attachment
+  findAll(): ReleaseAttachment[] {
+    const db = getDb();
+    const rows = db.prepare(
+      `SELECT * FROM release_attachment ORDER BY attached_at DESC`
+    ).all();
+
+    return (rows as any[]).map(row => ({
+      id: row.id,
+      releaseId: row.release_id,
+      eventId: row.event_id,
+      attachedAt: row.attached_at,
+    }));
+  }
+
+  // Finds all attachments for an event by name (JOIN with event table)
+  // SELECT * FROM release_attachment JOIN event on event.id = release_attachment.event_id WHERE LOWER(release_id) LIKE LOWER(EDP);
+
+  findByEventName(eventName: string): ReleaseAttachment[] {
+    const db = getDb();
+    const rows = db.prepare(
+      `SELECT * FROM release_attachment
+       JOIN event ON release_attachment.event_id = event.id
+       WHERE LOWER(event.name) LIKE LOWER(?)
+       ORDER BY release_attachment.attached_at DESC`
+    ).all(`%${eventName}%`);
+
+    return (rows as any[]).map(row => ({
+      id: row.id,
+      releaseId: row.release_id,
+      eventId: row.event_id,
+      attachedAt: row.attached_at,
+    }));
+  }
 }

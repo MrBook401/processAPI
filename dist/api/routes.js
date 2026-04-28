@@ -412,3 +412,67 @@ exports.routes.get('/applications', (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+/**
+ * @openapi
+ * /releases:
+ *   get:
+ *     summary: Retrieve all releases from attachment table
+ *     responses:
+ *       200:
+ *         description: A list of all release attachments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ReleaseAttachment'
+ *       500:
+ *         description: Server error
+ */
+exports.routes.get('/releases', (req, res) => {
+    try {
+        const releases = releaseRepo.findAll();
+        res.status(200).json(releases);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+/**
+ * @openapi
+ * /events/search/releases:
+ *   get:
+ *     summary: Retrieve releases linked to an event by name
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event name (case-insensitive partial match)
+ *     responses:
+ *       200:
+ *         description: A list of release attachments for the event
+ *       400:
+ *         description: Missing or empty name parameter
+ *       404:
+ *         description: No releases found for event
+ *       500:
+ *         description: Server error
+ */
+exports.routes.get('/events/search/', (req, res) => {
+    const { name } = req.query;
+    if (typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'Missing or empty "name" query parameter' });
+    }
+    try {
+        const releases = releaseRepo.findByEventName(name.trim());
+        if (releases.length === 0) {
+            return res.status(404).json({ error: 'No releases found for event' });
+        }
+        res.status(200).json(releases);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
