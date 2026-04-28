@@ -51,5 +51,32 @@ class ReleaseRepository {
             attachedAt: row.attached_at,
         }));
     }
+    // Returns ALL rows from release_attachment
+    findAll() {
+        const db = (0, sqlite_1.getDb)();
+        const rows = db.prepare(`SELECT * FROM release_attachment ORDER BY attached_at DESC`).all();
+        return rows.map(row => ({
+            id: row.id,
+            releaseId: row.release_id,
+            eventId: row.event_id,
+            attachedAt: row.attached_at,
+        }));
+    }
+    // Finds all attachments for an event by name (JOIN with event table)
+    // SELECT * FROM release_attachment JOIN event on event.id = release_attachment.event_id
+    // WHERE LOWER(release_id);
+    findByEventName(eventName) {
+        const db = (0, sqlite_1.getDb)();
+        const rows = db.prepare(`SELECT * FROM release_attachment
+       JOIN event ON release_attachment.event_id = event.id
+       WHERE LOWER(release_attachment.release_id) LIKE LOWER(?)
+       ORDER BY release_attachment.attached_at DESC`).all(`%${eventName}%`);
+        return rows.map(row => ({
+            id: row.id,
+            releaseId: row.release_id,
+            eventId: row.event_id,
+            attachedAt: row.attached_at,
+        }));
+    }
 }
 exports.ReleaseRepository = ReleaseRepository;
