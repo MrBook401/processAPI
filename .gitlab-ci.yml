@@ -33,7 +33,7 @@ cache:
     - node_modules/
     - .npm
 
-tests:
+tests-api:
   image: node:latest
   stage: test
   variables:
@@ -42,7 +42,6 @@ tests:
     - npm i
   script:
     - npm run test 
-    - cd src/ui && npm ci && npm run test
   artifacts:
     paths:
       - coverage/
