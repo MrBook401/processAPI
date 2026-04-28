@@ -1,8 +1,8 @@
 const API_BASE = 'http://localhost:3001';
 
 export interface TimeWindow {
-  start: string;
-  end: string;
+  start: string | null;
+  end: string | null;
   enabled: boolean;
 }
 
