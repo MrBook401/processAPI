@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest --coverage --reporters=jest-junit --coverageDirectory='coverage'",
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts"
