@@ -2,7 +2,6 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],
-  coverageReporters: ['clover', 'json', 'lcov', 'cobertura'],
+  coverageReporters: ['html', 'json', 'lcov', 'cobertura'],
   coverageDirectory: `coverage`,
-
 };
